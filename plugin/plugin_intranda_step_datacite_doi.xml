@@ -1,36 +1,30 @@
 <config_plugin>
-    <!--
-        order of configuration is:
-          1.) project name and step name matches
-          2.) step name matches and project is *
-          3.) project name matches and step name is *
-          4.) project name and step name are *
-	-->
-    
-    <config>
-        <!-- which projects to use for (can be more then one, otherwise use *) -->
-        <project>*</project>
-        <step>*</step>
-        
-        <!-- authentication and main information -->
-        <certificate>/opt/digiverso/goobi/config/certificate.pem</certificate>
-        <user>USER</user>
-        <base>BASE</base>
-        <url>https://viewer.goobi.io/idresolver?handle=</url>
+	<!-- order of configuration is: 1.) project name and step name matches 2.) step name matches and project is * 3.) project name matches and step name is 
+		* 4.) project name and step name are * -->
 
-        <!-- configuration for Handles -->
-        <prefix>go</prefix>
-        <name>goobi</name>
-        <separator>-</separator>
-        <creator>intranda</creator>
+	<config>
+		<!-- which projects to use for (can be more then one, otherwise use *) -->
+		<project>*</project>
+		<step>*</step>
 
-        <!-- configuration for DOIs -->
-        <doiGenerate>true</doiGenerate>
-        <doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>
-        
-        
-        <!-- display button to finish the task directly from within the entered plugin -->
-        <allowTaskFinishButtons>true</allowTaskFinishButtons>
-    </config>
+		<!-- authentication and main information -->
+		<base>BASE</base>
+		<url>https://viewer.goobi.io/idresolver?handle=</url>
+		<PASSWORD></PASSWORD>
+		<USERNAME></USERNAME>
+
+		<!-- configuration for Handles -->
+		<prefix>go</prefix>
+		<name>goobi</name>
+		<separator>-</separator>
+		<creator>intranda</creator>
+
+		<!-- configuration for DOIs -->
+		<doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>
+
+
+		<!-- display button to finish the task directly from within the entered plugin -->
+		<allowTaskFinishButtons>true</allowTaskFinishButtons>
+	</config>
 
 </config_plugin>

@@ -1,24 +1,20 @@
 package de.intranda.goobi.plugins.step.datacite.mds.doi;
 
+import de.intranda.goobi.plugins.step.datacite.mds.AccessObject;
 import de.intranda.goobi.plugins.step.doi.DoiException;
 import de.intranda.goobi.plugins.step.http.HTTPClient;
 import de.intranda.goobi.plugins.step.http.HTTPRequest;
 import de.intranda.goobi.plugins.step.http.HTTPResponse;
 
 /**
- * Demonstration of DataCite Metadata Store API /doi resource. 
- * @see <a href="http://mds.datacite.org">http://mds.datacite.org</a>
- * @author mpaluch
+ * DataCite Metadata Store API /doi resource. 
  */
 public class PostDOI {
 
-	public static final String SERVICE_ADDRESS = "https://mds.datacite.org/doi/";
-	private String USERNAME = "[username]";
-	private String PASSWORD = "[password]";
+    private AccessObject ao;
 	
-    public PostDOI(String username, String pw) {
-        this.USERNAME = username;
-        this.PASSWORD = pw;
+    public PostDOI(AccessObject ao) {
+        this.ao = ao;
     }
     
 	public HTTPResponse newURL(String doi, String url) throws DoiException{
@@ -36,9 +32,9 @@ public class PostDOI {
 						
 			HTTPRequest request = new HTTPRequest();
 			request.setMethod(HTTPRequest.Method.POST);
-			request.setURL(SERVICE_ADDRESS);
-			request.setUsername(USERNAME);
-			request.setPassword(PASSWORD);
+			request.setURL(ao.SERVICE_ADDRESS);
+			request.setUsername(ao.USERNAME);
+			request.setPassword(ao.PASSWORD);
 			
 			request.setContentType(contentType);
 			request.setBody(requestBody);
@@ -51,13 +47,4 @@ public class PostDOI {
 		}
 	}
 
-//	public static void main(String[] args) {
-//		PostDOI exec = new PostDOI();
-//		exec.execute();
-//		exec = null;
-//	}
-//
-//	private void print(String str){
-//		System.out.println(str);
-//	}
 }

@@ -5,6 +5,7 @@ import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.jdom2.JDOMException;
 
+import de.intranda.goobi.plugins.step.datacite.mds.AccessObject;
 import de.intranda.goobi.plugins.step.datacite.mds.doi.GetDOI;
 import de.intranda.goobi.plugins.step.datacite.mds.doi.PostDOI;
 import de.intranda.goobi.plugins.step.datacite.mds.metadata.PostMetadata;
@@ -14,6 +15,7 @@ import de.intranda.goobi.plugins.step.http.HTTPResponse;
 import lombok.extern.log4j.Log4j;
 import net.handle.hdllib.HandleException;
 import ugh.dl.DocStruct;
+import ugh.dl.Prefs;
 
 /**
  * Creates requests for the Handle Service, querying handles and creating new handles.
@@ -26,27 +28,28 @@ public class DoiHandler {
     private String prefix;
     private String separator;
 
-    private String USERNAME;
-    private String PASSWORD;
-
     private MakeDOI makeDOI;
+    private AccessObject ao;
 
     /**
      * Constructor.
      * 
      * @param config
+     * @param prefs
      * @throws HandleException
      * @throws IOException
      * @throws JDOMException
      */
-    public DoiHandler(SubnodeConfiguration config) throws IOException, JDOMException {
+    public DoiHandler(SubnodeConfiguration config, Prefs prefs) throws IOException, JDOMException {
         this.base = config.getString("base");
         this.prefix = config.getString("url");
         this.separator = config.getString("separator");
-        this.PASSWORD = config.getString("PASSWORD");
-        this.USERNAME = config.getString("USERNAME");
+
+        this.ao = new AccessObject(config.getString("USERNAME"), config.getString("PASSWORD"));
+        ao.SERVICE_ADDRESS = config.getString("SERVICE_ADDRESS", "https://mds.datacite.org/metadata/");
 
         this.makeDOI = new MakeDOI(config);
+        makeDOI.setPrefs(prefs);
     }
 
     /**
@@ -131,22 +134,21 @@ public class DoiHandler {
         }
 
         //update the URL:
-        PostDOI postDoi = new PostDOI(USERNAME, PASSWORD);
+        PostDOI postDoi = new PostDOI(ao);
         postDoi.newURL(handle, url);
 
         //Update the metadata:
-        PostMetadata postMeta = new PostMetadata(USERNAME, PASSWORD);
+        PostMetadata postMeta = new PostMetadata(ao);
         postMeta.forDoi(handle, strMetadata);
     }
 
-    
     /**
      * Returns true if the handle has already been registered, false otherwise.
      * 
      */
     public boolean isDoiRegistered(String handle) throws DoiException {
 
-        GetDOI getDoi = new GetDOI(USERNAME, PASSWORD);
+        GetDOI getDoi = new GetDOI(ao);
 
         return getDoi.ifExists(handle) != null;
     }
@@ -162,7 +164,7 @@ public class DoiHandler {
         log.debug("Update Handle: " + handle + ". Generating DOI.");
         try {
 
-            PostMetadata postData = new PostMetadata(USERNAME, PASSWORD);
+            PostMetadata postData = new PostMetadata(ao);
             HTTPResponse response = postData.forDoi(handle, metadata);
 
             if (response.getResponseCode() != HTTPResponse.CREATED) {
@@ -188,7 +190,7 @@ public class DoiHandler {
         }
         log.debug("register Handle: " + handle);
 
-        PostDOI postDoi = new PostDOI(USERNAME, PASSWORD);
+        PostDOI postDoi = new PostDOI(ao);
         HTTPResponse response = postDoi.newURL(handle, url);
 
         if (response.getResponseCode() != HTTPResponse.CREATED) {
@@ -197,54 +199,5 @@ public class DoiHandler {
 
         return true;
     }
-
-    //    private HandleValue[] getHandleValuesFromDOI(BasicDoi basicDOI) throws DoiException {
-    //        ArrayList<HandleValue> values = new ArrayList<HandleValue>();
-    //        for (Pair<String, List<String>> pair : basicDOI.getValues()) {
-    //            int index = getIndex(pair.getLeft());
-    //            for (String strValue : pair.getRight()) {
-    //                values.add(new HandleValue(index, pair.getLeft(), strValue));
-    //            }
-    //        }
-    //
-    //        int timestamp = (int) (System.currentTimeMillis() / 1000);
-    //        for (HandleValue handleValue : values) {
-    //            handleValue.setTimestamp(timestamp);
-    //        }
-    //        return values.toArray(new HandleValue[0]);
-    //    }
-
-    //    /**
-    //     * Get the index in the handle for the specified field type.
-    //     * 
-    //     * @param strType
-    //     * @return
-    //     * @throws HandleException
-    //     */
-    //    private int getIndex(String strType) throws DoiException {
-    //        switch (strType) {
-    //            case "TITLE":
-    //                return TITLE_INDEX;
-    //            case "AUTHORS":
-    //                return AUTHORS_INDEX;
-    //            case "PUBLISHER":
-    //                return PUBLISHER_INDEX;
-    //            case "PUBDATE":
-    //                return PUBDATE_INDEX;
-    //            case "INST":
-    //                return INST_INDEX;
-    //            default:
-    //                throw new DoiException("Mapping file error");
-    //        }
-    //    }
-//
-//    /**
-//     * Setter
-//     * 
-//     * @param strMappingFile
-//     */
-//    public void setDOIMappingFile(String strMappingFile) {
-//        this.strDOIMappingFile = strMappingFile;
-//    }
 
 }

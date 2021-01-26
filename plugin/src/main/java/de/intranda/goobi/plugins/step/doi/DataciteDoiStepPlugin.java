@@ -101,19 +101,20 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     /**
      * check if Metadata handle exists
      * if not, create handle and save it under "_urn" in the docstruct.
+     * @param prefs 
      * 
      * @return Returns the handle.
      * @throws DoiException 
      * @throws JDOMException 
      */
-    public String addDoi(DocStruct docstruct, String strId)
+    public String addDoi(DocStruct docstruct, String strId, Prefs prefs)
             throws HandleException, IOException, MetadataTypeNotAllowedException, JDOMException, DoiException {
 
-        DoiHandler handler = new DoiHandler(config);
+        DoiHandler handler = new DoiHandler(config, prefs);
         if (docstruct.getAllChildren() != null) {
             // run recursive through all children
             for (DocStruct ds : docstruct.getAllChildren()) {
-                return addDoi(ds, strId);
+                return addDoi(ds, strId, prefs);
             }
         } else {
             //already has a handle?
@@ -218,7 +219,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             String strId = getId(logical);
 
             //add handles to each  logical element
-            addDoi(logical, strId);
+            addDoi(logical, strId, prefs);
 //            addDoi(physical, strId, false);
 
             //and save the metadata again.

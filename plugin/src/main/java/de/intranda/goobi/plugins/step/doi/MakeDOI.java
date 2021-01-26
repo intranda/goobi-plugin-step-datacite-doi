@@ -20,7 +20,9 @@ import org.jdom2.output.XMLOutputter;
 
 import ugh.dl.DocStruct;
 import ugh.dl.Metadata;
+import ugh.dl.MetadataType;
 import ugh.dl.Person;
+import ugh.dl.Prefs;
 
 /**
  * Class for reading the metadata necessary for a DOI out of an XML document (eg a MetsMods file).
@@ -38,6 +40,8 @@ public class MakeDOI {
     private HashMap<String, Element> doiMappings;
 
     private String strCreator;
+
+    private Prefs prefs;
 
     //    /**
     //     * Static entry point for testing
@@ -164,10 +168,6 @@ public class MakeDOI {
         Element rootNew = new Element("resource");
         docEAD.setRootElement(rootNew);
         makeHeader(rootNew, strNewHandle);
-        //        SAXBuilder builder = new SAXBuilder();
-        //        File xmlFile = new File(strXmlFilePath);
-        //        Document document = (Document) builder.build(xmlFile);
-        //        Element rootNode = docEAD.getRootElement();
 
         //addDOI
         addDoi(rootNew, basicDOI);
@@ -180,13 +180,13 @@ public class MakeDOI {
         outter.output(rootNew, writer);
 
         return writer.toString();
-        
-//        TransformerFactory tf = TransformerFactory.newInstance();
-//        Transformer transformer = tf.newTransformer();
-//        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-//        StringWriter writer = new StringWriter();
-//        transformer.transform(new DOMSource(doc), new StreamResult(writer));
-//        String output = writer.getBuffer().toString()
+
+        //        TransformerFactory tf = TransformerFactory.newInstance();
+        //        Transformer transformer = tf.newTransformer();
+        //        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        //        StringWriter writer = new StringWriter();
+        //        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+        //        String output = writer.getBuffer().toString()
     }
 
     /**
@@ -226,7 +226,6 @@ public class MakeDOI {
         root.addContent(creators);
     }
 
-
     /**
      * For each name-value pair in the basicDoi, add an elemement to the root.
      * 
@@ -247,7 +246,6 @@ public class MakeDOI {
             }
         }
     }
-
 
     /**
      * Given the root of an xml tree, get the basic DOI info.
@@ -321,7 +319,8 @@ public class MakeDOI {
     }
 
     /**
-     * Check whther the field os a person. True for Autor and Publisher currently.
+     * Check whther the field is a person. Uses the current ruleset.
+     * 
      * @param name
      * @return
      */
@@ -331,7 +330,8 @@ public class MakeDOI {
             return false;
         }
 
-        return name.equalsIgnoreCase("Author") || name.equalsIgnoreCase("Publisher");
+        MetadataType type = prefs.getMetadataTypeByName(name);
+        return type != null && type.getIsPerson();
     }
 
     /**
@@ -353,6 +353,13 @@ public class MakeDOI {
             }
         }
         return lstValues;
+    }
+
+    /*
+     * Setter
+     */
+    public void setPrefs(Prefs prefs2) {
+        this.prefs = prefs2;
     }
 
 }
