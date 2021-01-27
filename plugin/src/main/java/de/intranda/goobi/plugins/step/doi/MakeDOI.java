@@ -179,7 +179,13 @@ public class MakeDOI {
         StringWriter writer = new StringWriter();
         outter.output(rootNew, writer);
 
-        return writer.toString();
+        String strOutput = writer.toString();
+        
+        //hack: need to remove namespace def:
+        strOutput = strOutput.replace(":xxxx", "");
+        strOutput = strOutput.replace("xxxx:", "xmlns:");
+        
+        return strOutput;
 
         //        TransformerFactory tf = TransformerFactory.newInstance();
         //        Transformer transformer = tf.newTransformer();
@@ -197,7 +203,7 @@ public class MakeDOI {
      * @param eltOriginal the original xml file to get the content from.
      */
     private void makeHeader(Element root, String strDOI) {
-        Namespace sNS = Namespace.getNamespace("xxxxxxxxx", "http://datacite.org/schema/kernel-4");
+        Namespace sNS = Namespace.getNamespace("xxxx", "http://datacite.org/schema/kernel-4");
         root.setAttribute("xsi", "http://www.w3.org/2001/XMLSchema-instance", sNS);
         root.setAttribute("schemaLocation", "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd", sNS);
 
@@ -234,13 +240,14 @@ public class MakeDOI {
      */
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
 
+        Namespace sNS = rootNew.getNamespace();
         for (Pair<String, List<String>> pair : basicDOI.getValues()) {
 
             String strName = pair.getLeft();
             List<String> lstValues = pair.getRight();
 
             for (String strValue : lstValues) {
-                Element elt = new Element(strName);
+                Element elt = new Element(strName,sNS);
                 elt.addContent(strValue);
                 rootNew.addContent(elt);
             }
@@ -309,7 +316,12 @@ public class MakeDOI {
             return getPersonFromMets(struct, name);
         }
 
+        //no values?
         ArrayList<String> lstValues = new ArrayList<String>();
+        if (struct.getAllMetadata() == null) {
+            return lstValues;
+        }
+
         for (Metadata mdata : struct.getAllMetadata()) {
             if (mdata.getType().getName().equalsIgnoreCase(name)) {
                 lstValues.add(mdata.getValue());
@@ -340,6 +352,12 @@ public class MakeDOI {
     private List<String> getPersonFromMets(DocStruct struct, String name) {
 
         ArrayList<String> lstValues = new ArrayList<String>();
+        
+      //no values?
+        if (struct.getAllPersons() == null) {
+            return lstValues;
+        }
+        
         for (Person mdata : struct.getAllPersons()) {
             if (mdata.getRole().equalsIgnoreCase(name)) {
                 String strName = mdata.getDisplayname();

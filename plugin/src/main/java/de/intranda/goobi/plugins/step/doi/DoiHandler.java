@@ -22,7 +22,8 @@ import ugh.dl.Prefs;
  */
 @Log4j
 public class DoiHandler {
-
+  
+    
     // Non-Static fields
     private String base;
     private String prefix;
@@ -46,7 +47,7 @@ public class DoiHandler {
         this.separator = config.getString("separator");
 
         this.ao = new AccessObject(config.getString("USERNAME"), config.getString("PASSWORD"));
-        ao.SERVICE_ADDRESS = config.getString("SERVICE_ADDRESS", "https://mds.datacite.org/metadata/");
+        ao.SERVICE_ADDRESS = config.getString("SERVICE_ADDRESS", "https://mds.datacite.org/");
 
         this.makeDOI = new MakeDOI(config);
         makeDOI.setPrefs(prefs);
@@ -71,7 +72,7 @@ public class DoiHandler {
      * Make a new handle with specified URL. Returns the new handle.
      * 
      * @param strNewHandle
-     * @param url
+     * @param urlTarget
      * @param separator
      * @param boMintNewSuffix
      * @param boMakeDOI
@@ -82,11 +83,12 @@ public class DoiHandler {
      * @throws JDOMException
      * @throws HandleException
      */
-    public String registerNewHandle(String strNewHandle, String url, String separator, DocStruct docstruct)
+    public String registerNewHandle(String strNewHandle, String urlTarget, String separator, DocStruct docstruct)
             throws DoiException, JDOMException, IOException {
 
         if (isDoiRegistered(strNewHandle)) {
-            updateURLHandleForObject(strNewHandle, url, docstruct);
+            updateURLHandleForObject(strNewHandle, urlTarget+strNewHandle, docstruct);
+            return strNewHandle;
         }
 
         //create a unique suffix?
@@ -109,11 +111,11 @@ public class DoiHandler {
         BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct);
         String strMetadata = makeDOI.getXMLStructure(strNewHandle, basicDOI);
 
-        //then register it
+        //register the metadata
         addDOI(strMetadata, strNewHandle);
 
         //Then register the url 
-        registerURL(strNewHandle, url);
+        registerURL(strNewHandle, urlTarget+strNewHandle);
 
         return strNewHandle;
     }
@@ -133,13 +135,13 @@ public class DoiHandler {
             throw new DoiException(e);
         }
 
-        //update the URL:
-        PostDOI postDoi = new PostDOI(ao);
-        postDoi.newURL(handle, url);
-
         //Update the metadata:
         PostMetadata postMeta = new PostMetadata(ao);
         postMeta.forDoi(handle, strMetadata);
+
+        //update the URL:
+        PostDOI postDoi = new PostDOI(ao);
+        postDoi.newURL(handle, url);
     }
 
     /**
@@ -200,4 +202,47 @@ public class DoiHandler {
         return true;
     }
 
+    
+    
+    /**
+     * Static entry point for testing
+     * 
+     * @param args
+     * @throws DoiException 
+     * @throws IOException
+     * @throws ParseException
+     * @throws ConfigurationException
+     * @throws JDOMException
+     */
+    public static void main(String[] args) throws DoiException {
+        System.out.println("Start DOI");
+        
+        AccessObject ao = new AccessObject("user", "pw");
+        ao.SERVICE_ADDRESS = "https://mds.test.datacite.org/";
+
+                
+        String strHandle = "10.80831/go-goobi-37876";
+        String metadata = "<resource xmlns=\"http://datacite.org/schema/kernel-4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd\">\r\n" + 
+                "    <identifier identifierType=\"DOI\">10.80831/go-goobi-37876</identifier>\r\n" + 
+                "    <creators>\r\n" + 
+                "        <creator>\r\n" + 
+                "            <creatorName>intranda</creatorName>\r\n" + 
+                "        </creator>\r\n" + 
+                "    </creators>\r\n" + 
+                "    <TITLE>¬Das preußische Rentengut</TITLE>\r\n" + 
+                "    <AUTHORS>Aal, Arthur</AUTHORS>\r\n" + 
+                "    <PUBLISHER>intranda</PUBLISHER>\r\n" + 
+                "    <PUBDATE>1901</PUBDATE>\r\n" + 
+                "</resource>";
+                
+        PostMetadata postMD = new PostMetadata(ao);
+        HTTPResponse response =  postMD.forDoi(strHandle, metadata);
+        System.out.println(response.toString());
+         
+        String strNewURL = "https://viewer.goobi.io/idresolver?handle=" + strHandle;
+        
+        PostDOI postDoi = new PostDOI(ao);
+        HTTPResponse response2 =  postDoi.newURL(strHandle, strNewURL);
+        System.out.println(response2.toString());
+    }
 }

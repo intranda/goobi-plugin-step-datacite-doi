@@ -17,7 +17,7 @@ public class PostDOI {
         this.ao = ao;
     }
     
-	public HTTPResponse newURL(String doi, String url) throws DoiException{
+	public HTTPResponse newURL(String handle, String url) throws DoiException{
 		try{						
 			//Note: To successfully POST a DOI, its metadata must be POSTed first (/metadata resource)			
 			String contentType = "text/plain;charset=UTF-8";
@@ -26,13 +26,13 @@ public class PostDOI {
 //			String doi = "10.5072/testing.doi.post.1";
 			
 			String requestBody = "";
-			requestBody += "doi=" + doi;
+			requestBody += "doi=" + handle;
 			requestBody += "\n";
 			requestBody += "url=" + url;
 						
 			HTTPRequest request = new HTTPRequest();
-			request.setMethod(HTTPRequest.Method.POST);
-			request.setURL(ao.SERVICE_ADDRESS);
+			request.setMethod(HTTPRequest.Method.PUT);
+			request.setURL(ao.SERVICE_ADDRESS + "doi/" + handle);
 			request.setUsername(ao.USERNAME);
 			request.setPassword(ao.PASSWORD);
 			

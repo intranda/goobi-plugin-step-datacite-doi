@@ -24,7 +24,7 @@ public class GetMetadata {
 
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.GET);
-            request.setURL(ao.SERVICE_ADDRESS + doi);
+            request.setURL(ao.SERVICE_ADDRESS + "metadata/"+ doi);
             request.setUsername(ao.USERNAME);
             request.setPassword(ao.PASSWORD);
             request.setAccept("application/xml");

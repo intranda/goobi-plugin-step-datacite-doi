@@ -6,7 +6,7 @@ package de.intranda.goobi.plugins.step.datacite.mds;
 public class AccessObject {
 
     //Address for the datacite requests
-    public String SERVICE_ADDRESS = "https://mds.datacite.org/doi/";
+    public String SERVICE_ADDRESS = "https://mds.datacite.org/";
     
     //User
     public String USERNAME = "[username]";

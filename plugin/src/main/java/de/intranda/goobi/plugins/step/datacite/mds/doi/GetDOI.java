@@ -25,7 +25,7 @@ public class GetDOI {
 
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.GET);
-            request.setURL(ao.SERVICE_ADDRESS + doi);
+            request.setURL(ao.SERVICE_ADDRESS + "doi/" + doi);
             request.setUsername(ao.USERNAME);
             request.setPassword(ao.PASSWORD);
 

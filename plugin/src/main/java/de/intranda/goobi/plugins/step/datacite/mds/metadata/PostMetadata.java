@@ -10,8 +10,8 @@ import de.intranda.goobi.plugins.step.http.HTTPResponse;
  * DataCite Metadata Store API /metadata resource.
  * 
  */
-public class PostMetadata {
-
+public class PostMetadata {  
+    
     private AccessObject ao;
 
     public PostMetadata(AccessObject ao) {
@@ -24,7 +24,7 @@ public class PostMetadata {
 
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.POST);
-            request.setURL(ao.SERVICE_ADDRESS +  doi);
+            request.setURL(ao.SERVICE_ADDRESS + "metadata/" +  doi);
 
             request.setUsername(ao.USERNAME);
             request.setPassword(ao.PASSWORD);

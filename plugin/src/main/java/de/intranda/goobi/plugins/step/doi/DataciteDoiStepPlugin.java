@@ -51,26 +51,28 @@ import ugh.exceptions.MetadataTypeNotAllowedException;
 @PluginImplementation
 @Log4j2
 public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
-    
+
     @Getter
     private String title = "intranda_step_datacite_doi";
     @Getter
     private Step step;
     @Getter
     private String value;
-    @Getter 
+    @Getter
     private boolean allowTaskFinishButtons;
     private String returnPath;
-    @Getter @Setter
+    @Getter
+    @Setter
     private MetadataType urn;
-    @Getter @Setter
+    @Getter
+    @Setter
     private SubnodeConfiguration config;
-    
+
     @Override
     public void initialize(Step step, String returnPath) {
         this.returnPath = returnPath;
         this.step = step;
-                
+
         // read parameters from correct block in configuration file
         config = ConfigPlugins.getProjectAndStepConfig(title, step);
         allowTaskFinishButtons = config.getBoolean("allowTaskFinishButtons", false);
@@ -78,9 +80,9 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     }
 
     /**
-     *  If the element already has a handle, return it, otherwise return null.
+     * If the element already has a handle, return it, otherwise return null.
      */
-    private String getDoi(DocStruct docstruct) {
+    private String getHandle(DocStruct docstruct) {
         List<? extends Metadata> lstURN = docstruct.getAllMetadataByType(urn);
         if (lstURN.size() == 1) {
             return lstURN.get(0).getValue();
@@ -92,51 +94,53 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     /**
      * Add handle ( "_urn") metadata to the docstruct.
      */
-    private void setDoi(DocStruct docstruct, String strHandle) throws MetadataTypeNotAllowedException {
+    private void setHandle(DocStruct docstruct, String strHandle) throws MetadataTypeNotAllowedException {
         Metadata md = new Metadata(urn);
         md.setValue(strHandle);
         docstruct.addMetadata(md);
     }
-    
+
     /**
-     * check if Metadata handle exists
-     * if not, create handle and save it under "_urn" in the docstruct.
-     * @param prefs 
+     * check if Metadata handle exists if not, create handle and save it under "_urn" in the docstruct.
+     * 
+     * @param prefs
      * 
      * @return Returns the handle.
-     * @throws DoiException 
-     * @throws JDOMException 
+     * @throws DoiException
+     * @throws JDOMException
      */
     public String addDoi(DocStruct docstruct, String strId, Prefs prefs)
             throws HandleException, IOException, MetadataTypeNotAllowedException, JDOMException, DoiException {
 
-        DoiHandler handler = new DoiHandler(config, prefs);
-        if (docstruct.getAllChildren() != null) {
-            // run recursive through all children
-            for (DocStruct ds : docstruct.getAllChildren()) {
-                return addDoi(ds, strId, prefs);
+//        if (docstruct.getAllChildren() != null) {
+//            // run recursive through all children
+//            for (DocStruct ds : docstruct.getAllChildren()) {
+//                addDoi(ds, strId, prefs);
+//            }
+//        }
+
+        //already has a handle?
+        String strHandle = getHandle(docstruct);
+        if (strHandle == null) {
+            //if not, make one.
+            String name = config.getString("name");
+            String prefix = config.getString("prefix");
+            String separator = config.getString("separator", "-");
+            String strPostfix = "";
+            if (prefix != null && !prefix.isEmpty()) {
+                strPostfix = prefix + separator;
             }
-        } else {
-            //already has a handle?
-            String strHandle = getDoi(docstruct);
-            if (strHandle == null) {
-                //if not, make one.
-                String name = config.getString("name");
-                String prefix = config.getString("prefix");
-                String separator = config.getString("separator", "-");
-                String strPostfix = "";
-                if (prefix != null && !prefix.isEmpty()) {
-                    strPostfix = prefix + separator;
-                }
-                if (name != null && !name.isEmpty()) {
-                    strPostfix += name + separator;
-                }
-                strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct);
-                setDoi(docstruct, strHandle);
+            if (name != null && !name.isEmpty()) {
+                strPostfix += name + separator;
             }
-            return strHandle;
+
+            DoiHandler handler = new DoiHandler(config, prefs);
+            strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct);
+            setHandle(docstruct, strHandle);
         }
-        return null;
+        
+        return strHandle;
+
     }
 
     /**
@@ -154,7 +158,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
         //otherwise:
         return null;
     }
-    
+
     @Override
     public PluginGuiType getPluginGuiType() {
         return PluginGuiType.NONE;
@@ -179,7 +183,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     public String finish() {
         return "/uii" + returnPath;
     }
-    
+
     @Override
     public int getInterfaceVersion() {
         return 0;
@@ -189,7 +193,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     public HashMap<String, StepReturnValue> validate() {
         return null;
     }
-    
+
     @Override
     public boolean execute() {
         PluginReturnValue ret = run();
@@ -197,9 +201,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     }
 
     /**
-     * Carry out the plugin:
-     * - get the current digital document 
-     * - for each physical and logical element of the document, create and register a handle
+     * Carry out the plugin: - get the current digital document - for each physical and logical element of the document, create and register a handle
      * - write the handles into the MetsMods file for the document
      * 
      */
@@ -215,17 +217,18 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
 
             DigitalDocument digitalDocument = fileformat.getDigitalDocument();
             DocStruct logical = digitalDocument.getLogicalDocStruct();
-//            DocStruct physical = digitalDocument.getPhysicalDocStruct();
+            //            DocStruct physical = digitalDocument.getPhysicalDocStruct();
             String strId = getId(logical);
 
             //add handles to each  logical element
             addDoi(logical, strId, prefs);
-//            addDoi(physical, strId, false);
+            //            addDoi(physical, strId, false);
 
             //and save the metadata again.
             process.writeMetadataFile(fileformat);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            successfull = false;
         }
 
         log.info("DataCite Doi step plugin executed");
