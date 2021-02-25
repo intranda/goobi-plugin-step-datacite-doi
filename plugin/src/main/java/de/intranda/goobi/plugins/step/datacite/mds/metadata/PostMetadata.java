@@ -40,4 +40,25 @@ public class PostMetadata {
         }
     }
 
+    public HTTPResponse forUpdatingDoi(String doi, String metadata) throws DoiException {
+        try {
+            String requestBody = metadata; //Metadata.getMetadataFromFile();
+
+            HTTPRequest request = new HTTPRequest();
+            request.setMethod(HTTPRequest.Method.PUT);
+            request.setURL(ao.SERVICE_ADDRESS + "metadata/" +  doi);
+
+            request.setUsername(ao.USERNAME);
+            request.setPassword(ao.PASSWORD);
+
+            request.setContentType("application/xml;charset=UTF-8");
+            request.setBody(requestBody);
+
+            HTTPResponse response = HTTPClient.doHTTPRequest(request);
+            return response;
+            
+        } catch (Exception e) {
+            throw new DoiException(e);
+        }
+    }
 }

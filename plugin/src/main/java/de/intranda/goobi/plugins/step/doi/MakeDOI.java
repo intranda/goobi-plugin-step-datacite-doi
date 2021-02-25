@@ -2,7 +2,6 @@ package de.intranda.goobi.plugins.step.doi;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -175,24 +174,13 @@ public class MakeDOI {
         //now save:
         XMLOutputter outter = new XMLOutputter();
         outter.setFormat(Format.getPrettyFormat().setIndent("    "));
+        String strOutput = outter.outputString(rootNew);
 
-        StringWriter writer = new StringWriter();
-        outter.output(rootNew, writer);
-
-        String strOutput = writer.toString();
-        
         //hack: need to remove namespace def:
         strOutput = strOutput.replace(":xxxx", "");
         strOutput = strOutput.replace("xxxx:", "xmlns:");
-        
-        return strOutput;
 
-        //        TransformerFactory tf = TransformerFactory.newInstance();
-        //        Transformer transformer = tf.newTransformer();
-        //        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-        //        StringWriter writer = new StringWriter();
-        //        transformer.transform(new DOMSource(doc), new StreamResult(writer));
-        //        String output = writer.getBuffer().toString()
+        return strOutput;
     }
 
     /**
@@ -213,12 +201,12 @@ public class MakeDOI {
         ident.addContent(strDOI);
         root.addContent(ident);
 
-        //Creators
-        Element creators = new Element("creators");
-        Element creator = new Element("creator");
-        Element creatorName = new Element("creatorName");
-        creatorName.addContent(this.strCreator);
-        creator.addContent(creatorName);
+        //        //Creators
+        //        Element creators = new Element("creators");
+        //        Element creator = new Element("creator");
+        //        Element creatorName = new Element("creatorName");
+        //        creatorName.addContent(this.strCreator);
+        //        creator.addContent(creatorName);
 
         //        List<String> lstCreatorNames = getValues("creatorName", root);
         //
@@ -226,10 +214,10 @@ public class MakeDOI {
         //            Element creatorName = new Element("creatorName");
         //            creatorName.addContent(strCreatorName);
         //            creator.addContent(creatorName);
-        //        }
-
-        creators.addContent(creator);
-        root.addContent(creators);
+        //        //        }
+        //
+        //        creators.addContent(creator);
+        //        root.addContent(creators);
     }
 
     /**
@@ -241,15 +229,35 @@ public class MakeDOI {
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
 
         Namespace sNS = rootNew.getNamespace();
+
+        //Add the elts with children:
+        Element creators = new Element("creators", sNS);
+        rootNew.addContent(creators);
+        Element titles = new Element("titles", sNS);
+        rootNew.addContent(titles);
+        
         for (Pair<String, List<String>> pair : basicDOI.getValues()) {
 
             String strName = pair.getLeft();
             List<String> lstValues = pair.getRight();
 
             for (String strValue : lstValues) {
-                Element elt = new Element(strName,sNS);
+                Element elt = new Element(strName, sNS);
                 elt.addContent(strValue);
-                rootNew.addContent(elt);
+                
+                if (strName.contentEquals("creator")) {
+                    creators.addContent(elt);
+                    
+                } else if (strName.contentEquals("title")) {
+                    titles.addContent(elt);
+                    
+                } else if (strName.contentEquals("resourceType")) {
+                    elt.setAttribute("resourceTypeGeneral", "Text");
+                    rootNew.addContent(elt);
+                    
+                } else {
+                    rootNew.addContent(elt);
+                }
             }
         }
     }
@@ -262,10 +270,10 @@ public class MakeDOI {
      */
     public BasicDoi getBasicDoi(DocStruct physical) {
         BasicDoi doi = new BasicDoi();
-        doi.TITLE = getValues("title", physical);
-        doi.AUTHORS = getValues("author", physical);
+        doi.TITLES = getValues("title", physical);
+        doi.CREATORS = getValues("author", physical);
         doi.PUBLISHER = getValues("publisher", physical);
-        doi.PUBDATE = getValues("pubdate", physical);
+        doi.PUBLICATIONYEAR = getValues("publicationYear", physical);
         doi.RESOURCETYPE = getValues("resourceType", physical);
         return doi;
     }
@@ -352,12 +360,12 @@ public class MakeDOI {
     private List<String> getPersonFromMets(DocStruct struct, String name) {
 
         ArrayList<String> lstValues = new ArrayList<String>();
-        
-      //no values?
+
+        //no values?
         if (struct.getAllPersons() == null) {
             return lstValues;
         }
-        
+
         for (Person mdata : struct.getAllPersons()) {
             if (mdata.getRole().equalsIgnoreCase(name)) {
                 String strName = mdata.getDisplayname();

@@ -80,6 +80,44 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     }
 
     /**
+     * Carry out the plugin: - get the current digital document - for each physical and logical element of the document, create and register a handle
+     * - write the handles into the MetsMods file for the document
+     * 
+     */
+    @Override
+    public PluginReturnValue run() {
+        boolean successfull = true;
+        try {
+            //read the metatdata
+            Process process = step.getProzess();
+            Prefs prefs = process.getRegelsatz().getPreferences();
+            urn = prefs.getMetadataTypeByName("_urn");
+            Fileformat fileformat = process.readMetadataFile();
+
+            DigitalDocument digitalDocument = fileformat.getDigitalDocument();
+            DocStruct logical = digitalDocument.getLogicalDocStruct();
+            //            DocStruct physical = digitalDocument.getPhysicalDocStruct();
+            String strId = getId(logical);
+
+            //add handles to each  logical element
+            addDoi(logical, strId, prefs);
+            //            addDoi(physical, strId, false);
+
+            //and save the metadata again.
+            process.writeMetadataFile(fileformat);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            successfull = false;
+        }
+
+        log.info("DataCite Doi step plugin executed");
+        if (!successfull) {
+            return PluginReturnValue.ERROR;
+        }
+        return PluginReturnValue.FINISH;
+    }
+    
+    /**
      * If the element already has a handle, return it, otherwise return null.
      */
     private String getHandle(DocStruct docstruct) {
@@ -112,13 +150,8 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     public String addDoi(DocStruct docstruct, String strId, Prefs prefs)
             throws HandleException, IOException, MetadataTypeNotAllowedException, JDOMException, DoiException {
 
-//        if (docstruct.getAllChildren() != null) {
-//            // run recursive through all children
-//            for (DocStruct ds : docstruct.getAllChildren()) {
-//                addDoi(ds, strId, prefs);
-//            }
-//        }
-
+        DoiHandler handler = new DoiHandler(config, prefs);
+        
         //already has a handle?
         String strHandle = getHandle(docstruct);
         if (strHandle == null) {
@@ -133,11 +166,15 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             if (name != null && !name.isEmpty()) {
                 strPostfix += name + separator;
             }
-
-            DoiHandler handler = new DoiHandler(config, prefs);
+       
             strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct);
             setHandle(docstruct, strHandle);
+        } else {
+            
+            //already has handle? Then delete the old data, and make new DOI:
+            handler.updateData(docstruct, strHandle);
         }
+        
         
         return strHandle;
 
@@ -200,41 +237,5 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
         return ret != PluginReturnValue.ERROR;
     }
 
-    /**
-     * Carry out the plugin: - get the current digital document - for each physical and logical element of the document, create and register a handle
-     * - write the handles into the MetsMods file for the document
-     * 
-     */
-    @Override
-    public PluginReturnValue run() {
-        boolean successfull = true;
-        try {
-            //read the metatdata
-            Process process = step.getProzess();
-            Prefs prefs = process.getRegelsatz().getPreferences();
-            urn = prefs.getMetadataTypeByName("_urn");
-            Fileformat fileformat = process.readMetadataFile();
 
-            DigitalDocument digitalDocument = fileformat.getDigitalDocument();
-            DocStruct logical = digitalDocument.getLogicalDocStruct();
-            //            DocStruct physical = digitalDocument.getPhysicalDocStruct();
-            String strId = getId(logical);
-
-            //add handles to each  logical element
-            addDoi(logical, strId, prefs);
-            //            addDoi(physical, strId, false);
-
-            //and save the metadata again.
-            process.writeMetadataFile(fileformat);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            successfull = false;
-        }
-
-        log.info("DataCite Doi step plugin executed");
-        if (!successfull) {
-            return PluginReturnValue.ERROR;
-        }
-        return PluginReturnValue.FINISH;
-    }
 }

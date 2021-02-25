@@ -18,10 +18,10 @@ import org.apache.commons.lang3.tuple.Pair;
 public class BasicDoi {
     
     public List<String> lstFields;
-    public List<String> TITLE;
-    public List<String> AUTHORS;
+    public List<String> CREATORS;
+    public List<String> TITLES;
     public List<String> PUBLISHER;
-    public List<String> PUBDATE;
+    public List<String> PUBLICATIONYEAR;
     public List<String> RESOURCETYPE;
 
     /**
@@ -29,11 +29,11 @@ public class BasicDoi {
      */
     public BasicDoi() {
         lstFields = new ArrayList<String>();
-        lstFields.add("TITLE");
-        lstFields.add("AUTHORS");
-        lstFields.add("PUBLISHER");
-        lstFields.add("PUBDATE");
-        lstFields.add("RESOURCETYPE");
+        lstFields.add("creator");
+        lstFields.add("title");
+        lstFields.add("publisher");
+        lstFields.add("publicationYear");
+        lstFields.add("resourceType");
     }
 
     /**
@@ -43,11 +43,11 @@ public class BasicDoi {
      */
     public List<Pair<String, List<String>>> getValues() {
         List<Pair<String, List<String>>> lstValues = new ArrayList<Pair<String, List<String>>>();
-        lstValues.add(Pair.of("TITLE", TITLE));
-        lstValues.add(Pair.of("AUTHORS", AUTHORS));
-        lstValues.add(Pair.of("PUBLISHER", PUBLISHER));
-        lstValues.add(Pair.of("PUBDATE", PUBDATE));
-        lstValues.add(Pair.of("RESOURCETYPE", RESOURCETYPE));
+        lstValues.add(Pair.of("creator", CREATORS));
+        lstValues.add(Pair.of("title", TITLES));
+        lstValues.add(Pair.of("publisher", PUBLISHER));
+        lstValues.add(Pair.of("publicationYear", PUBLICATIONYEAR));
+        lstValues.add(Pair.of("resourceType", RESOURCETYPE));
         return lstValues;
     }
 }
