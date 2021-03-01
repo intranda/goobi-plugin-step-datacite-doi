@@ -17,7 +17,7 @@
 		<prefix>go</prefix>
 		<name>goobi</name>
 		<separator>-</separator>
-		<creator>intranda</creator>
+		<handleMetadata>_urn</handleMetadata>
 
 		<!-- configuration for DOIs -->
 		<doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>

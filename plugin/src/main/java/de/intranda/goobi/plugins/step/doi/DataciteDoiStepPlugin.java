@@ -94,7 +94,8 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             //read the metatdata
             Process process = step.getProzess();
             Prefs prefs = process.getRegelsatz().getPreferences();
-            urn = prefs.getMetadataTypeByName("_urn");
+            String strUrn = config.getString("handleMetadata", "_urn");
+            urn = prefs.getMetadataTypeByName(strUrn);
             Fileformat fileformat = process.readMetadataFile();
 
             DigitalDocument digitalDocument = fileformat.getDigitalDocument();
