@@ -17,6 +17,8 @@ import lombok.extern.log4j.Log4j;
 import net.handle.hdllib.HandleException;
 import ugh.dl.DocStruct;
 import ugh.dl.Prefs;
+import ugh.exceptions.MetadataTypeNotAllowedException;
+import ugh.exceptions.UGHException;
 
 /**
  * Creates requests for the Handle Service, querying handles and creating new handles.
@@ -30,7 +32,7 @@ public class DoiHandler {
     private String separator;
 
     private MakeDOI makeDOI;
-    private AccessObject ao;
+    private AccessObject ao; 
 
     /**
      * Constructor.
@@ -59,9 +61,10 @@ public class DoiHandler {
      * @throws IOException
      * @throws JDOMException
      * @throws DoiException
+     * @throws UGHException 
      * 
      */
-    public String makeURLHandleForObject(String strObjectId, String strPostfix, DocStruct docstruct) throws JDOMException, IOException, DoiException {
+    public String makeURLHandleForObject(String strObjectId, String strPostfix, DocStruct docstruct) throws JDOMException, IOException, DoiException, UGHException {
 
         String strNewHandle = registerNewHandle(base + "/" + strPostfix + strObjectId, docstruct);
 
@@ -72,18 +75,14 @@ public class DoiHandler {
      * Make a new handle with specified URL. Returns the new handle.
      * 
      * @param strNewHandle
-     * @param urlTarget
-     * @param separator
-     * @param boMintNewSuffix
-     * @param boMakeDOI
-     * @param basicDOI
+     * @param docstruct
      * @return
      * @throws DoiException
      * @throws IOException
      * @throws JDOMException
-     * @throws HandleException
+     * @throws UGHException 
      */
-    public String registerNewHandle(String strNewHandle, DocStruct docstruct) throws DoiException, JDOMException, IOException {
+    public String registerNewHandle(String strNewHandle, DocStruct docstruct) throws DoiException, JDOMException, IOException, UGHException {
 
         if (isDoiRegistered(strNewHandle)) {
             updateURLHandleForObject(strNewHandle, prefix + strNewHandle, docstruct);
@@ -235,42 +234,4 @@ public class DoiHandler {
         return true;
     }
 
-    /**
-     * Static entry point for testing
-     * 
-     * @param args
-     * @throws DoiException
-     * @throws IOException
-     * @throws ParseException
-     * @throws ConfigurationException
-     * @throws JDOMException
-     */
-    public static void main(String[] args) throws DoiException {
-        System.out.println("Start DOI");
-
-        AccessObject ao = new AccessObject("YZVP.GOOBI", "eo9iaH5u");
-        ao.SERVICE_ADDRESS = "https://mds.test.datacite.org/";
-
-        String strHandle = "10.80831/go-goobi-37876-1";
-        String metadata =
-                "<resource xmlns=\"http://datacite.org/schema/kernel-4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd\">\r\n"
-                        + "    <identifier identifierType=\"DOI\">10.80831/go-goobi-37876</identifier>\r\n" + "    <creators>\r\n"
-                        + "        <creator>\r\n" + "            <creatorName>intranda</creatorName>\r\n" + "        </creator>\r\n"
-                        + "    </creators>\r\n" + "    <title>¬Das preußische Rentengut</TITLE>\r\n" + "    <author>Aal, Arthur</AUTHORS>\r\n"
-                        + "    <publisher>intranda</PUBLISHER>\r\n" + "    <publicationYear>1901</publicationYear>\r\n" + "</resource>";
-
-        PostMetadata postMD = new PostMetadata(ao);
-        HTTPResponse response = postMD.forDoi(strHandle, metadata);
-        System.out.println(response.toString());
-
-        String strNewURL = "https://viewer.goobi.io/idresolver?handle=" + strHandle;
-
-        PostDOI postDoi = new PostDOI(ao);
-        HTTPResponse response2 = postDoi.newURL(strHandle, strNewURL);
-        System.out.println(response2.toString());
-
-        GetMetadata getMD = new GetMetadata(ao);
-        HTTPResponse response3 = getMD.forDoi(strHandle);
-        System.out.println(response3.toString());
-    }
 }

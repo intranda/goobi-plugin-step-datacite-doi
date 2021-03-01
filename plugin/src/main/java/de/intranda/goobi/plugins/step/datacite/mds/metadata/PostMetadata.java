@@ -20,7 +20,7 @@ public class PostMetadata {
 
     public HTTPResponse forDoi(String doi, String metadata) throws DoiException {
         try {
-            String requestBody = metadata; //Metadata.getMetadataFromFile();
+            String requestBody = metadata;  
 
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.POST);
@@ -42,7 +42,7 @@ public class PostMetadata {
 
     public HTTPResponse forUpdatingDoi(String doi, String metadata) throws DoiException {
         try {
-            String requestBody = metadata; //Metadata.getMetadataFromFile();
+            String requestBody = metadata;  
 
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.PUT);

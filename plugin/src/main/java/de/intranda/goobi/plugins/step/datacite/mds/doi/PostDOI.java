@@ -22,9 +22,6 @@ public class PostDOI {
 			//Note: To successfully POST a DOI, its metadata must be POSTed first (/metadata resource)			
 			String contentType = "text/plain;charset=UTF-8";
 			
-//			String url = "http://url.test.doi";
-//			String doi = "10.5072/testing.doi.post.1";
-			
 			String requestBody = "";
 			requestBody += "doi=" + handle;
 			requestBody += "\n";

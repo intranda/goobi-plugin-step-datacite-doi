@@ -21,8 +21,6 @@ public class GetDOI {
     public HTTPResponse ifExists(String doi) throws DoiException {
         try {
 
-            //String doi = "10.4224/21268323";
-
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.GET);
             request.setURL(ao.SERVICE_ADDRESS + "doi/" + doi);

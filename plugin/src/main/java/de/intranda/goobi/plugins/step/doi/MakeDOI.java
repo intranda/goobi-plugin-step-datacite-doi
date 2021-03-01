@@ -15,13 +15,13 @@ import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-//import org.wiztools.xsdgen.ParseException;
 
 import ugh.dl.DocStruct;
 import ugh.dl.Metadata;
 import ugh.dl.MetadataType;
 import ugh.dl.Person;
 import ugh.dl.Prefs;
+import ugh.exceptions.MetadataTypeNotAllowedException;
 
 /**
  * Class for reading the metadata necessary for a DOI out of an XML document (eg a MetsMods file).
@@ -31,37 +31,15 @@ public class MakeDOI {
 
     /**
      * The mapping document: this shows which metadata from the MetsMods file should be recorded in which filed of the DOI
-     * 
      */
     private Document mapping;
 
     //dictionary of mappings
     private HashMap<String, Element> doiMappings;
 
-    private String strCreator;
+    private Namespace sNS;
 
     private Prefs prefs;
-
-    //    /**
-    //     * Static entry point for testing
-    //     * 
-    //     * @param args
-    //     * @throws IOException
-    //     * @throws ParseException
-    //     * @throws ConfigurationException
-    //     * @throws JDOMException
-    //     */
-    //    public static void main(String[] args) throws IOException, ConfigurationException, JDOMException {
-    //        System.out.println("Start DOI");
-    //        MakeDOI makeDoi = new MakeDOI(args[0]);
-    //
-    //        File xmlFile = new File("/home/joel/XML/orig.xml");
-    //        SAXBuilder builder = new SAXBuilder();
-    //        Document document = (Document) builder.build(xmlFile);
-    //
-    //        String strOut = makeDoi.getXMLStructure(document, "/home/joel/XML/doi_final.xml", "handle/number");
-    //        System.out.println("Finished");
-    //    }
 
     /**
      * ctor: takes the mapping file as param.
@@ -80,8 +58,6 @@ public class MakeDOI {
         for (Element elt : rootNode.getChildren()) {
             doiMappings.put(elt.getChildText("field"), elt);
         }
-
-        this.strCreator = config.getString("creator", "");
     }
 
     /**
@@ -192,8 +168,10 @@ public class MakeDOI {
      */
     private void makeHeader(Element root, String strDOI) {
         Namespace sNS = Namespace.getNamespace("xxxx", "http://datacite.org/schema/kernel-4");
-        root.setAttribute("xsi", "http://www.w3.org/2001/XMLSchema-instance", sNS);
-        root.setAttribute("schemaLocation", "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd", sNS);
+        Namespace xsiNS = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        //        root.setAttribute("xsi", "http://www.w3.org/2001/XMLSchema-instance", sNS);
+        root.addNamespaceDeclaration(sNS);
+        root.setAttribute("schemaLocation", "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd", xsiNS);
 
         //DOI
         Element ident = new Element("identifier");
@@ -201,23 +179,6 @@ public class MakeDOI {
         ident.addContent(strDOI);
         root.addContent(ident);
 
-        //        //Creators
-        //        Element creators = new Element("creators");
-        //        Element creator = new Element("creator");
-        //        Element creatorName = new Element("creatorName");
-        //        creatorName.addContent(this.strCreator);
-        //        creator.addContent(creatorName);
-
-        //        List<String> lstCreatorNames = getValues("creatorName", root);
-        //
-        //        for (String strCreatorName : lstCreatorNames) {
-        //            Element creatorName = new Element("creatorName");
-        //            creatorName.addContent(strCreatorName);
-        //            creator.addContent(creatorName);
-        //        //        }
-        //
-        //        creators.addContent(creator);
-        //        root.addContent(creators);
     }
 
     /**
@@ -228,14 +189,12 @@ public class MakeDOI {
      */
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
 
-        Namespace sNS = rootNew.getNamespace();
+        this.sNS = rootNew.getNamespace();
 
         //Add the elts with children:
-        Element creators = new Element("creators", sNS);
-        rootNew.addContent(creators);
         Element titles = new Element("titles", sNS);
         rootNew.addContent(titles);
-        
+
         for (Pair<String, List<String>> pair : basicDOI.getValues()) {
 
             String strName = pair.getLeft();
@@ -243,22 +202,93 @@ public class MakeDOI {
 
             for (String strValue : lstValues) {
                 Element elt = new Element(strName, sNS);
+
                 elt.addContent(strValue);
-                
-                if (strName.contentEquals("creator")) {
-                    creators.addContent(elt);
-                    
-                } else if (strName.contentEquals("title")) {
+
+                if (strName.contentEquals("title")) {
                     titles.addContent(elt);
-                    
+
                 } else if (strName.contentEquals("resourceType")) {
                     elt.setAttribute("resourceTypeGeneral", "Text");
                     rootNew.addContent(elt);
-                    
+
                 } else {
                     rootNew.addContent(elt);
                 }
+                //                }
             }
+        }
+
+        if (basicDOI.lstContent != null) {
+            for (DoiListContent listContent : basicDOI.lstContent) {
+
+                Element eltList = new Element(listContent.strListName, sNS);
+
+                for (Element elt : listContent.lstEntries) {
+                    eltList.addContent(elt);
+                }
+
+                rootNew.addContent(eltList);
+            }
+        }
+    }
+
+    /*
+     * Specific structure for an Editor
+     */
+    private Element makeEditor(Metadata mdPerson) {
+
+        Person editor = (Person) mdPerson;
+        Element eltEditor = new Element("contributor");
+        eltEditor.setAttribute("contributorType", "Editor");
+
+        Element eltName = new Element("contributorName", sNS);
+        eltName.addContent(editor.getDisplayname());
+        eltEditor.addContent(eltName);
+
+        addName(editor, eltEditor);
+
+        return eltEditor;
+    }
+
+    /*
+     * Specific structure for an Author
+     */
+    private Element makeAuthor(Metadata mdPerson) {
+
+        Person author = (Person) mdPerson;
+        Element eltAuthor = new Element("creator");
+        Element eltName = new Element("creatorName", sNS);
+        String strName = author.getDisplayname();
+        if (strName == null || strName.isEmpty()) {
+            strName = mdPerson.getValue();
+        }
+
+        eltName.addContent(strName);
+        eltAuthor.addContent(eltName);
+
+        addName(author, eltAuthor);
+
+        return eltAuthor;
+    }
+
+    /*
+     * Add the first and last name of a Person, if any
+     */
+    private void addName(Person editor, Element eltEditor) {
+
+        String strFirst = editor.getFirstname();
+        String strLast = editor.getLastname();
+
+        if (strFirst != null && !strFirst.isEmpty()) {
+            Element eltGivenName = new Element("givenName", sNS);
+            eltGivenName.addContent(strFirst);
+            eltEditor.addContent(eltGivenName);
+        }
+        if (strLast != null && !strLast.isEmpty()) {
+            Element eltFamilyName = new Element("familyName", sNS);
+            eltFamilyName.addContent(strLast);
+            eltEditor.addContent(eltFamilyName);
         }
     }
 
@@ -267,15 +297,101 @@ public class MakeDOI {
      * 
      * @param physical
      * @return
+     * @throws MetadataTypeNotAllowedException
      */
-    public BasicDoi getBasicDoi(DocStruct physical) {
+    public BasicDoi getBasicDoi(DocStruct physical) throws MetadataTypeNotAllowedException {
         BasicDoi doi = new BasicDoi();
         doi.TITLES = getValues("title", physical);
-        doi.CREATORS = getValues("author", physical);
+        //        doi.CREATORS = getValues("author", physical);
         doi.PUBLISHER = getValues("publisher", physical);
         doi.PUBLICATIONYEAR = getValues("publicationYear", physical);
         doi.RESOURCETYPE = getValues("resourceType", physical);
+
+        doi.lstContent = getContentLists(physical);
         return doi;
+    }
+
+    private List<DoiListContent> getContentLists(DocStruct doc) throws MetadataTypeNotAllowedException {
+
+        List<DoiListContent> lstContent = new ArrayList<DoiListContent>();
+
+        //go through the maetadata map
+        //first (compulsory) authors:
+        DoiListContent authors = new DoiListContent("creators");
+        for (Metadata mdAuthot : getMetadataValues("author", doc)) {
+
+            Element eltAuthor = makeAuthor(mdAuthot);
+            authors.lstEntries.add(eltAuthor);
+        }
+
+        lstContent.add(authors);
+
+        //then (optional) editors:
+        if (doiMappings.containsKey("editor")) {
+
+            DoiListContent editors = new DoiListContent("contributors");
+            for (Metadata mdEditor : getMetadataValues("editor", doc)) {
+
+                Element eltEditor = makeEditor(mdEditor);
+                editors.lstEntries.add(eltEditor);
+            }
+
+            lstContent.add(editors);
+        }
+
+        if (lstContent.isEmpty())
+
+        {
+            return null;
+        }
+        //otherwise
+        return lstContent;
+    }
+
+    /**
+     * Get the values of metadata for the specified field, in the specified struct.
+     * 
+     * @throws MetadataTypeNotAllowedException
+     */
+    private List<Metadata> getMetadataValues(String field, DocStruct struct) throws MetadataTypeNotAllowedException {
+        ArrayList<Metadata> lstDefault = new ArrayList<Metadata>();
+        String metadata = field;
+        Element eltMap = doiMappings.get(field);
+        if (eltMap != null) {
+            //set up the default value:
+            String strDefault = eltMap.getChildText("default");
+            if (strDefault != null && !strDefault.isEmpty()) {
+                MetadataType type = prefs.getMetadataTypeByName(eltMap.getChildText("metadata"));
+                Metadata mdDefault = new Metadata(type);
+                if (type.getIsPerson()) {
+                    mdDefault = new Person(type);
+                }
+
+                mdDefault.setValue(strDefault);
+                lstDefault.add(mdDefault);
+            }
+            //try to find the local value:
+            metadata = eltMap.getChildText("metadata");
+        }
+
+        List<Metadata> lstLocalValues = getMetadataFromMets(struct, metadata);
+
+        if (!lstLocalValues.isEmpty()) {
+            return lstLocalValues;
+        }
+
+        if (eltMap != null) {
+            //could not find first choice? then try alternatives
+            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                lstLocalValues = getMetadataFromMets(struct, eltAlt.getText());
+                if (!lstLocalValues.isEmpty()) {
+                    return lstLocalValues;
+                }
+            }
+        }
+
+        //otherwise just return default
+        return lstDefault;
     }
 
     /**
@@ -295,7 +411,7 @@ public class MakeDOI {
             metadata = eltMap.getChildText("metadata");
         }
 
-        List<String> lstLocalValues = getMetedataFromMets(struct, metadata);
+        List<String> lstLocalValues = getStringMetadataFromMets(struct, metadata);
 
         if (!lstLocalValues.isEmpty()) {
             return lstLocalValues;
@@ -304,7 +420,7 @@ public class MakeDOI {
         if (eltMap != null) {
             //could not find first choice? then try alternatives
             for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-                lstLocalValues = getMetedataFromMets(struct, eltAlt.getText());
+                lstLocalValues = getStringMetadataFromMets(struct, eltAlt.getText());
                 if (!lstLocalValues.isEmpty()) {
                     return lstLocalValues;
                 }
@@ -318,7 +434,30 @@ public class MakeDOI {
     /**
      * Get all metadata of type "name" in the specified struct.
      */
-    private List<String> getMetedataFromMets(DocStruct struct, String name) {
+    private List<Metadata> getMetadataFromMets(DocStruct struct, String name) {
+
+        if (fieldIsPerson(name)) {
+            return getMetadataPersonFromMets(struct, name);
+        }
+
+        //no values?
+        ArrayList<Metadata> lstValues = new ArrayList<Metadata>();
+        if (struct.getAllMetadata() == null) {
+            return lstValues;
+        }
+
+        for (Metadata mdata : struct.getAllMetadata()) {
+            if (mdata.getType().getName().equalsIgnoreCase(name)) {
+                lstValues.add(mdata);
+            }
+        }
+        return lstValues;
+    }
+
+    /**
+     * Get all metadata of type "name" in the specified struct.
+     */
+    private List<String> getStringMetadataFromMets(DocStruct struct, String name) {
 
         if (fieldIsPerson(name)) {
             return getPersonFromMets(struct, name);
@@ -376,6 +515,26 @@ public class MakeDOI {
                     strName = mdata.getInstitution();
                 }
                 lstValues.add(strName);
+            }
+        }
+        return lstValues;
+    }
+
+    /**
+     * Get all persons of type "name" in the specified struct.
+     */
+    private List<Metadata> getMetadataPersonFromMets(DocStruct struct, String name) {
+
+        ArrayList<Metadata> lstValues = new ArrayList<Metadata>();
+
+        //no values?
+        if (struct.getAllPersons() == null) {
+            return lstValues;
+        }
+
+        for (Person mdata : struct.getAllPersons()) {
+            if (mdata.getRole().equalsIgnoreCase(name)) {
+                lstValues.add(mdata);
             }
         }
         return lstValues;

@@ -20,8 +20,6 @@ public class GetMetadata {
     public HTTPResponse forDoi(String doi) throws DoiException {
         try {
 
-            // doi = "10.5072/testing.doi.post.1";
-
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.GET);
             request.setURL(ao.SERVICE_ADDRESS + "metadata/"+ doi);

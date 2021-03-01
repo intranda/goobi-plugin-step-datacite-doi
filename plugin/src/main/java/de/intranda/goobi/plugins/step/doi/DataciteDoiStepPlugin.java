@@ -27,6 +27,7 @@ import java.util.List;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.goobi.beans.Process;
 import org.goobi.beans.Step;
+import org.goobi.production.enums.LogType;
 import org.goobi.production.enums.PluginGuiType;
 import org.goobi.production.enums.PluginReturnValue;
 import org.goobi.production.enums.PluginType;
@@ -35,6 +36,7 @@ import org.goobi.production.plugin.interfaces.IStepPluginVersion2;
 import org.jdom2.JDOMException;
 
 import de.sub.goobi.config.ConfigPlugins;
+import de.sub.goobi.helper.Helper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -47,6 +49,7 @@ import ugh.dl.Metadata;
 import ugh.dl.MetadataType;
 import ugh.dl.Prefs;
 import ugh.exceptions.MetadataTypeNotAllowedException;
+import ugh.exceptions.UGHException;
 
 @PluginImplementation
 @Log4j2
@@ -96,21 +99,21 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
 
             DigitalDocument digitalDocument = fileformat.getDigitalDocument();
             DocStruct logical = digitalDocument.getLogicalDocStruct();
-            //            DocStruct physical = digitalDocument.getPhysicalDocStruct();
             String strId = getId(logical);
 
             //add handles to each  logical element
             addDoi(logical, strId, prefs);
-            //            addDoi(physical, strId, false);
 
             //and save the metadata again.
             process.writeMetadataFile(fileformat);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.ERROR, "Error writing DOI: " + e.toString());
             successfull = false;
         }
 
         log.info("DataCite Doi step plugin executed");
+        
         if (!successfull) {
             return PluginReturnValue.ERROR;
         }
@@ -130,7 +133,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     }
 
     /**
-     * Add handle ( "_urn") metadata to the docstruct.
+     * Add handle (eg "_urn") metadata to the docstruct.
      */
     private void setHandle(DocStruct docstruct, String strHandle) throws MetadataTypeNotAllowedException {
         Metadata md = new Metadata(urn);
@@ -146,9 +149,10 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * @return Returns the handle.
      * @throws DoiException
      * @throws JDOMException
+     * @throws UGHException 
      */
     public String addDoi(DocStruct docstruct, String strId, Prefs prefs)
-            throws HandleException, IOException, MetadataTypeNotAllowedException, JDOMException, DoiException {
+            throws HandleException, IOException, JDOMException, DoiException, UGHException {
 
         DoiHandler handler = new DoiHandler(config, prefs);
         
