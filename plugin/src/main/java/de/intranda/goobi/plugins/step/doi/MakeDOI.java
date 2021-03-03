@@ -3,6 +3,7 @@ package de.intranda.goobi.plugins.step.doi;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -358,8 +359,7 @@ public class MakeDOI {
         String metadata = field;
         Element eltMap = doiMappings.get(field);
         if (eltMap != null) {
-            //set up the default value:
-            String strDefault = eltMap.getChildText("default");
+            String strDefault = getDefault(eltMap);
             if (strDefault != null && !strDefault.isEmpty()) {
                 MetadataType type = prefs.getMetadataTypeByName(eltMap.getChildText("metadata"));
                 Metadata mdDefault = new Metadata(type);
@@ -403,7 +403,7 @@ public class MakeDOI {
         Element eltMap = doiMappings.get(field);
         if (eltMap != null) {
             //set up the default value:
-            String strDefault = eltMap.getChildText("default");
+            String strDefault = getDefault(eltMap);            
             if (!strDefault.isEmpty()) {
                 lstDefault.add(strDefault);
             }
@@ -429,6 +429,16 @@ public class MakeDOI {
 
         //otherwise just return default
         return lstDefault;
+    }
+
+    private String getDefault(Element eltMap) {
+        String strDefault = eltMap.getChildText("default");
+        
+        if (strDefault != null && strDefault.contentEquals("#CurrentYear")) {
+            strDefault = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+        }
+        
+        return strDefault;
     }
 
     /**

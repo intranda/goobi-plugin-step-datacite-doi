@@ -90,6 +90,9 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     @Override
     public PluginReturnValue run() {
         boolean successfull = true;
+        String strDOI = "";
+        Boolean boUpdate = false;
+
         try {
             //read the metatdata
             Process process = step.getProzess();
@@ -102,25 +105,33 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             DocStruct logical = digitalDocument.getLogicalDocStruct();
             String strId = getId(logical);
 
-            //add handles to each  logical element
-            addDoi(logical, strId, prefs);
+            //add handle
+            boUpdate = getHandle(logical) != null;
+
+            strDOI = addDoi(logical, strId, prefs);
 
             //and save the metadata again.
             process.writeMetadataFile(fileformat);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.ERROR, "Error writing DOI: " + e.toString());
+            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.ERROR, "Error writing DOI: " + e.getMessage());
             successfull = false;
         }
 
         log.info("DataCite Doi step plugin executed");
-        
+
         if (!successfull) {
             return PluginReturnValue.ERROR;
         }
+
+        if (boUpdate) {
+            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI updated: " + strDOI);
+        } else {
+            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI created: " + strDOI);
+        }
         return PluginReturnValue.FINISH;
     }
-    
+
     /**
      * If the element already has a handle, return it, otherwise return null.
      */
@@ -150,13 +161,13 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * @return Returns the handle.
      * @throws DoiException
      * @throws JDOMException
-     * @throws UGHException 
+     * @throws UGHException
      */
     public String addDoi(DocStruct docstruct, String strId, Prefs prefs)
             throws HandleException, IOException, JDOMException, DoiException, UGHException {
 
         DoiHandler handler = new DoiHandler(config, prefs);
-        
+
         //already has a handle?
         String strHandle = getHandle(docstruct);
         if (strHandle == null) {
@@ -171,16 +182,15 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             if (name != null && !name.isEmpty()) {
                 strPostfix += name + separator;
             }
-       
+
             strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct);
             setHandle(docstruct, strHandle);
         } else {
-            
+
             //already has handle? Then delete the old data, and make new DOI:
             handler.updateData(docstruct, strHandle);
         }
-        
-        
+
         return strHandle;
 
     }
@@ -241,6 +251,5 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
         PluginReturnValue ret = run();
         return ret != PluginReturnValue.ERROR;
     }
-
 
 }
