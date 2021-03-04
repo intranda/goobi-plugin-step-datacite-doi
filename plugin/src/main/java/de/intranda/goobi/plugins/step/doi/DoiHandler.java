@@ -202,8 +202,12 @@ public class DoiHandler {
             HTTPResponse response = postData.forUpdatingDoi(handle, strMetadata);
 
             if (response.getResponseCode() != HTTPResponse.CREATED) {
-                return false;
+                throw new DoiException("Tried to update handle " + handle + " but failed: " + response.toString());
             }
+            
+            //now update the url:
+            registerURL(handle, prefix + handle);
+            
         } catch (DoiException e) {
             log.error("Tried to update handle " + handle + " but failed", e);
             throw e;
@@ -228,7 +232,7 @@ public class DoiHandler {
         HTTPResponse response = postDoi.newURL(handle, url);
 
         if (response.getResponseCode() != HTTPResponse.CREATED) {
-            throw new DoiException("\"Tried to register handle \" + handle + \" but failed: \" + response.getResponseCode()");
+            throw new DoiException("Tried to register handle " + handle + " but failed: " + response.toString());
         }
 
         return true;

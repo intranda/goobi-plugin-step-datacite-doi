@@ -99,10 +99,14 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             Prefs prefs = process.getRegelsatz().getPreferences();
             String strUrn = config.getString("handleMetadata", "_urn");
             urn = prefs.getMetadataTypeByName(strUrn);
-            Fileformat fileformat = process.readMetadataFile();
 
+            Fileformat fileformat = process.readMetadataFile();
             DigitalDocument digitalDocument = fileformat.getDigitalDocument();
             DocStruct logical = digitalDocument.getLogicalDocStruct();
+            if (logical.getType().isAnchor()) {
+                logical = logical.getAllChildren().get(0);
+            }
+
             String strId = getId(logical);
 
             //add handle
