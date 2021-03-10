@@ -16,15 +16,15 @@ plugin_intranda_step_datacite_doi.xml
 plugin_intranda_step_datacite_mapping.xml
 ```
 
-The file `"plugin_intranda_step_datacite_doi.jar"` contains the program logic and is an executable file, and should be copied into
+The file `plugin_intranda_step_datacite_doi.jar` contains the program logic and is an executable file, and should be copied into
 `/opt/digiverso/goobi/plugins/import`.
 
-The file `"plugin_intranda_step_datacite_doi-GUI.jar"` contains data for the presentation of the plugin, and should be copied into
+The file `plugin_intranda_step_datacite_doi-GUI.jar` contains data for the presentation of the plugin, and should be copied into
 `/opt/digiverso/goobi/plugins/GUI`.
 
-The file ``plugin_intranda_step_datacite_mapping.xml`` is the mapping file, defining how local metadata should be translated to the form required for the DOI, and should be copied into `/opt/digiverso/goobi/config/`.
+The file `plugin_intranda_step_datacite_mapping.xml` is the mapping file, defining how local metadata should be translated to the form required for the DOI, and should be copied into `/opt/digiverso/goobi/config/`.
 
-The file ``plugin_intranda_step_datacite_doi.xml`` is the config file, and should be copied into `/opt/digiverso/goobi/config/`.
+The file `plugin_intranda_step_datacite_doi.xml` is the config file, and should be copied into `/opt/digiverso/goobi/config/`.
 
 The config file is used to configure the plug-in and must be structured as follows:
 
@@ -116,10 +116,8 @@ The mapping file looks something like this:
 
     <map>
         <field>publicationYear</field>
-        <metadata>PublicationYear</metadata>
-        <altMetadata>PublicationYearSort</altMetadata>
-        <altMetadata>PublicationRun</altMetadata>
-        <default>9999</default>
+        <metadata>_dateDigitization</metadata>
+        <default>#CurrentYear</default>
     </map>
 
     <map>
@@ -146,8 +144,15 @@ For each <map>, the <field> specifies the name of the DOI element, and the <meta
 
 For the mandatory fields, a <default> _must_ be specified; for optional fields this is not necessary, but may be done if wished.
 
+The default entry `#CurrentYear` is a special case: it is replaced with the current year in the DOI.
+
 
 ## Mode of operation
 
 The programme examines the metadata fields of a METS-MODS file from a Goobi process. From these it creates the data for a DOI, using the mapping file to translate. It then registers the DOI via Datacite, and writes the generated DOI into the METS-MODS file under the metadata specified in <handleMetadata>.
+
+### Installation 
+
+A process task must be defined, using the step plugin `intranda_step_datacite_doi`. The plugin writes the DOI to the metadata of the process, so the boxes for "Metadata" and "Update metadata index when finishing" should be ticked. The task can then be carried out either automatically or manually.
+
 
