@@ -45,8 +45,8 @@ The config file is used to configure the plug-in and must be structured as follo
         <USERNAME>YZVP.GOOBI</USERNAME>
 
         <!-- configuration for Handles -->
-        <prefix></prefix>
-        <name></name>
+        <prefix>go</prefix>
+        <name>goobi</name>
         <separator>-</separator>
         <handleMetadata>DOI</handleMetadata>
         
@@ -140,16 +140,16 @@ The mapping file looks something like this:
 </Mapping>
 ```
 
-For each <map>, the <field> specifies the name of the DOI element, and the <metadata> and <altMetadata> entries indicate from which metadata of the mods file the value should be taken, in order. If there is no such entry in the mods file, then the <default> value is taken. The value "unkn" for "unknown" is recommended by Datacite for data which is missing.
+For each `<map>`, the `<field>` specifies the name of the DOI element, and the `<metadata>` and `<altMetadata>` entries indicate from which metadata of the mods file the value should be taken, in order. If there is no such entry in the mods file, then the `<default>` value is taken. The value `"unkn"` for "unknown" is recommended by Datacite for data which is missing.
 
-For the mandatory fields, a <default> _must_ be specified; for optional fields this is not necessary, but may be done if wished.
+For the mandatory fields, a `<default>` _must_ be specified; for optional fields this is not necessary, but may be done if wished.
 
 The default entry `#CurrentYear` is a special case: it is replaced with the current year in the DOI.
 
 
 ## Mode of operation
 
-The programme examines the metadata fields of a METS-MODS file from a Goobi process. From these it creates the data for a DOI, using the mapping file to translate. It then registers the DOI via Datacite, and writes the generated DOI into the METS-MODS file under the metadata specified in <handleMetadata>.
+The programme examines the metadata fields of a METS-MODS file from a Goobi process. From these it creates the data for a DOI, using the mapping file to translate. It then registers the DOI via Datacite, and writes the generated DOI into the METS-MODS file under the metadata specified in `<handleMetadata>`.
 
 ### Installation 
 

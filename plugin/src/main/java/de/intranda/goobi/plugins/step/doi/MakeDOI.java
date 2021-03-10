@@ -31,7 +31,7 @@ import ugh.exceptions.MetadataTypeNotAllowedException;
 public class MakeDOI {
 
     /**
-     * The mapping document: this shows which metadata from the MetsMods file should be recorded in which filed of the DOI
+     * The mapping document: this shows which metadata from the MetsMods file should be recorded in which field of the DOI
      */
     private Document mapping;
 

@@ -47,9 +47,9 @@ public class DataciteDoiPluginTest {
     public static void main(String[] args)
             throws IOException, JDOMException, ConfigurationException, PreferencesException, ReadException, UGHException {
 
-        String strConfig = "/home/joel/git/Stuttgart/plugin_intranda_step_datacite_doi.xml";
+        String strConfig = "/opt/digiverso/goobi/config/plugin_intranda_step_datacite_doi.xml";
         String strMeta = "/opt/digiverso/goobi/metadata/25/meta.xml";
-        String strRS = "/opt/digiverso/goobi/rulesets/ruleset_mpirg.xml";
+        String strRS = "/opt/digiverso/goobi/rulesets/ruleset.xml";
 
         XMLConfiguration xmlConfig = new XMLConfiguration(strConfig); //ConfigPlugins.getPluginConfig("whatever");
         xmlConfig.setExpressionEngine(new XPathExpressionEngine());
@@ -76,84 +76,4 @@ public class DataciteDoiPluginTest {
         System.out.print(str);
     }
 
-    //    private static BasicDoi getBasicDoi() {
-    //        
-    //        BasicDoi doi =   new BasicDoi();
-    //        doi.TITLES = new ArrayList<String>();
-    //        doi.PUBLISHER = new ArrayList<String>();
-    //        doi.PUBLICATIONYEAR = new ArrayList<String>();
-    //        doi.RESOURCETYPE = new ArrayList<String>();
-    //
-    //        doi.TITLES.add("hello");
-    //        
-    //        DoiListContent lstAutohrs =new DoiListContent("creators");
-    //        lstAutohrs.lstEntries.add(new )
-    //        doi.lstContent.add();
-    //        doi.CREATORS.add("Smith, Fred");
-    //        doi.CREATORS.add("Smith, Wilma");
-    //               
-    //        return doi;
-    //    }
-    
-//
-//    /**
-//     * Static entry point from DoiHandler for testing
-//     * 
-//     * @param args
-//     * @throws DoiException
-//     * @throws IOException
-//     * @throws ParseException
-//     * @throws ConfigurationException
-//     * @throws JDOMException
-//     */
-//    public static void main(String[] args) throws DoiException {
-//        System.out.println("Start DOI");
-//
-//        AccessObject ao = new AccessObject("YZVP.GOOBI", "eo9iaH5u");
-//        ao.SERVICE_ADDRESS = "https://mds.test.datacite.org/";
-//
-//        String strHandle = "10.80831/go-goobi-37876-1";
-//        String metadata =
-//                "<resource xmlns=\"http://datacite.org/schema/kernel-4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd\">\r\n"
-//                        + "    <identifier identifierType=\"DOI\">10.80831/go-goobi-37876</identifier>\r\n" + "    <creators>\r\n"
-//                        + "        <creator>\r\n" + "            <creatorName>intranda</creatorName>\r\n" + "        </creator>\r\n"
-//                        + "    </creators>\r\n" + "    <title>¬Das preußische Rentengut</TITLE>\r\n" + "    <author>Aal, Arthur</AUTHORS>\r\n"
-//                        + "    <publisher>intranda</PUBLISHER>\r\n" + "    <publicationYear>1901</publicationYear>\r\n" + "</resource>";
-//
-//        PostMetadata postMD = new PostMetadata(ao);
-//        HTTPResponse response = postMD.forDoi(strHandle, metadata);
-//        System.out.println(response.toString());
-//
-//        String strNewURL = "https://viewer.goobi.io/idresolver?handle=" + strHandle;
-//
-//        PostDOI postDoi = new PostDOI(ao);
-//        HTTPResponse response2 = postDoi.newURL(strHandle, strNewURL);
-//        System.out.println(response2.toString());
-//
-//        GetMetadata getMD = new GetMetadata(ao);
-//        HTTPResponse response3 = getMD.forDoi(strHandle);
-//        System.out.println(response3.toString());
-//    }
-    
-    
-    //    /**
-    //     * Static entry point for testing MakeDOI
-    //     * 
-    //     * @param args
-    //     * @throws IOException
-    //     * @throws ParseException
-    //     * @throws ConfigurationException
-    //     * @throws JDOMException
-    //     */
-    //    public static void main(String[] args) throws IOException, ConfigurationException, JDOMException {
-    //        System.out.println("Start DOI");
-    //        MakeDOI makeDoi = new MakeDOI(args[0]);
-    //
-    //        File xmlFile = new File("/home/joel/XML/orig.xml");
-    //        SAXBuilder builder = new SAXBuilder();
-    //        Document document = (Document) builder.build(xmlFile);
-    //
-    //        String strOut = makeDoi.getXMLStructure(document, "/home/joel/XML/doi_final.xml", "handle/number");
-    //        System.out.println("Finished");
-    //    }
 }
