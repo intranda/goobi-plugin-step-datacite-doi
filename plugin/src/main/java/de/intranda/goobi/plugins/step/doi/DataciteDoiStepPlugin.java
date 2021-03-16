@@ -1,6 +1,7 @@
 package de.intranda.goobi.plugins.step.doi;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * This file is part of a plugin for Goobi - a Workflow tool for the support of mass digitization.
@@ -70,6 +71,8 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     @Getter
     @Setter
     private SubnodeConfiguration config;
+    private String typeForDOI;
+    private DoiHandler handler;
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -91,13 +94,13 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     public PluginReturnValue run() {
         boolean successfull = true;
         String strDOI = "";
-        Boolean boUpdate = false;
 
         try {
             //read the metatdata
             Process process = step.getProzess();
             Prefs prefs = process.getRegelsatz().getPreferences();
             String strUrn = config.getString("handleMetadata", "_urn");
+            typeForDOI = config.getString("typeForDOI", "");
             urn = prefs.getMetadataTypeByName(strUrn);
 
             Fileformat fileformat = process.readMetadataFile();
@@ -107,15 +110,36 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 logical = logical.getAllChildren().get(0);
             }
 
-            String strId = getId(logical);
+            ArrayList<DocStruct> lstArticles = new ArrayList<DocStruct>();
+            getArticles(lstArticles, logical);
+            int i = 0;
 
-            //add handle
-            boUpdate = getHandle(logical) != null;
+            this.handler = new DoiHandler(config, prefs);
 
-            strDOI = addDoi(logical, strId, prefs);
+            for (DocStruct article : lstArticles) {
+
+                //get the id of the article, or if it has none, the id of the parent:
+                String strId = getId(article, logical);
+
+                //add handle
+                //already has a handle?
+                String strHandle = getHandle(article);
+                //If not, create a new handle
+                if (strHandle == null) {
+                    strDOI = addDoi(article, strId, prefs, i);
+                    Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI created: " + strDOI);
+                    i++;
+                }
+                //otherwise just update the existing handle
+                else {
+                    handler.updateData(article, strHandle);
+                    Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI updated: " + strHandle);
+                }
+            }
 
             //and save the metadata again.
             process.writeMetadataFile(fileformat);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.ERROR, "Error writing DOI: " + e.getMessage());
@@ -128,12 +152,23 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             return PluginReturnValue.ERROR;
         }
 
-        if (boUpdate) {
-            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI updated: " + strDOI);
-        } else {
-            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI created: " + strDOI);
-        }
         return PluginReturnValue.FINISH;
+    }
+
+    //Collect all sub structs of the type typeForDOI
+    private void getArticles(ArrayList<DocStruct> lstArticles, DocStruct logical) {
+
+        if (typeForDOI.isEmpty() || logical.getType().getName().contentEquals(typeForDOI)) {
+            lstArticles.add(logical);
+            return;
+        }
+
+        //go through:
+        if (logical.getAllChildren() != null) {
+            for (DocStruct child : logical.getAllChildren()) {
+                getArticles(lstArticles, child);
+            }
+        }
     }
 
     /**
@@ -158,51 +193,44 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     }
 
     /**
-     * check if Metadata handle exists if not, create handle and save it under "_urn" in the docstruct.
+     * create handle and save it in the docstruct.
      * 
      * @param prefs
+     * @param iIndex
      * 
      * @return Returns the handle.
      * @throws DoiException
      * @throws JDOMException
      * @throws UGHException
      */
-    public String addDoi(DocStruct docstruct, String strId, Prefs prefs)
+    public String addDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex)
             throws HandleException, IOException, JDOMException, DoiException, UGHException {
 
-        DoiHandler handler = new DoiHandler(config, prefs);
-
-        //already has a handle?
-        String strHandle = getHandle(docstruct);
-        if (strHandle == null) {
-            //if not, make one.
-            String name = config.getString("name");
-            String prefix = config.getString("prefix");
-            String separator = config.getString("separator", "-");
-            String strPostfix = "";
-            if (prefix != null && !prefix.isEmpty()) {
-                strPostfix = prefix + separator;
-            }
-            if (name != null && !name.isEmpty()) {
-                strPostfix += name + separator;
-            }
-
-            strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct);
-            setHandle(docstruct, strHandle);
-        } else {
-
-            //already has handle? Then delete the old data, and make new DOI:
-            handler.updateData(docstruct, strHandle);
+        //Make a handle
+        String name = config.getString("name");
+        String prefix = config.getString("prefix");
+        String separator = config.getString("separator", "-");
+        String strPostfix = "";
+        if (prefix != null && !prefix.isEmpty()) {
+            strPostfix = prefix + separator;
         }
+        if (name != null && !name.isEmpty()) {
+            strPostfix += name + separator;
+        }
+
+        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex);
+        setHandle(docstruct, strHandle);
 
         return strHandle;
 
     }
 
     /**
-     * Return the CatalogIDDigital for this document
+     * Return the CatalogIDDigital for this document. If it has none, return the id for the parent
+     * 
+     * @param logical2
      */
-    public String getId(DocStruct logical) {
+    public String getId(DocStruct logical, DocStruct parent) {
         List<Metadata> lstMetadata = logical.getAllMetadata();
         if (lstMetadata != null) {
             for (Metadata metadata : lstMetadata) {
@@ -212,6 +240,15 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             }
         }
         //otherwise:
+        lstMetadata = parent.getAllMetadata();
+        if (lstMetadata != null) {
+            for (Metadata metadata : lstMetadata) {
+                if (metadata.getType().getName().equals("CatalogIDDigital")) {
+                    return metadata.getValue();
+                }
+            }
+        }
+
         return null;
     }
 

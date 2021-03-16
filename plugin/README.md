@@ -17,7 +17,7 @@ plugin_intranda_step_datacite_mapping.xml
 ```
 
 The file `plugin_intranda_step_datacite_doi.jar` contains the program logic and is an executable file, and should be copied into
-`/opt/digiverso/goobi/plugins/import`.
+`/opt/digiverso/goobi/plugins/step`.
 
 The file `plugin_intranda_step_datacite_doi-GUI.jar` contains data for the presentation of the plugin, and should be copied into
 `/opt/digiverso/goobi/plugins/GUI`.
@@ -53,6 +53,8 @@ The config file is used to configure the plug-in and must be structured as follo
         <!-- configuration for DOIs -->
         <doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>
 
+        <!-- Type of DocStruct which should be given DOIs -->
+        <typeForDOI>Article</typeForDOI>
 
         <!-- display button to finish the task directly from within the entered plugin -->
         <allowTaskFinishButtons>true</allowTaskFinishButtons>
@@ -82,6 +84,9 @@ specifies under which metadata name the handle for the DOI is to be saved in the
 
 The element `"doiMapping"`
 specifies the path to the mapping file.
+
+The element `"typeForDOI"` 
+specifies the DocStruct type which will be given DOIs. If this is empty or missing, the top DocStruct only will be given a DOI; if it contains the name of a sub-DocStruct, then these will be given DOIs
 
 The element `"allowTaskFinishButtons"`
 allows the task to be stopped from within the plugin.
@@ -149,7 +154,7 @@ The default entry `#CurrentYear` is a special case: it is replaced with the curr
 
 ## Mode of operation
 
-The programme examines the metadata fields of a METS-MODS file from a Goobi process. From these it creates the data for a DOI, using the mapping file to translate. It then registers the DOI via Datacite, and writes the generated DOI into the METS-MODS file under the metadata specified in `<handleMetadata>`.
+The programme examines the metadata fields of a METS-MODS file from a Goobi process. From these it creates the data for a DOI, using the mapping file to translate. It then registers the DOI via Datacite, and writes the generated DOI fopr each DocStruct into the METS-MODS file, under the metadata specified in `<handleMetadata>`.
 
 ### Installation 
 

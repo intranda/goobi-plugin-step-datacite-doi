@@ -22,6 +22,8 @@
 		<!-- configuration for DOIs -->
 		<doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>
 
+        <!-- Type of DocStruct which should be given DOIs -->
+        <typeForDOI>Article</typeForDOI>
 
 		<!-- display button to finish the task directly from within the entered plugin -->
 		<allowTaskFinishButtons>true</allowTaskFinishButtons>
