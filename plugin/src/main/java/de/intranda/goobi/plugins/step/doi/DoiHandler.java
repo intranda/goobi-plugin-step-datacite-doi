@@ -131,30 +131,6 @@ public class DoiHandler {
         return strNewHandle;
     }
 
-//    /**
-//     * Given an object with specified handle, update the URL (and if required DOI)
-//     * 
-//     */
-//    public void updateURLHandleForObject(String handle, String url, DocStruct docstruct) throws DoiException {
-//
-//        String strMetadata = "";
-//
-//        try {
-//            BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct);
-//            strMetadata = makeDOI.getXMLStructure(handle, basicDOI);
-//        } catch (Exception e) {
-//            throw new DoiException(e);
-//        }
-//
-//        //Update the metadata:
-//        PostMetadata postMeta = new PostMetadata(ao);
-//        postMeta.forUpdatingDoi(handle, strMetadata);
-//
-//        //update the URL:
-//        PostDOI postDoi = new PostDOI(ao);
-//        postDoi.newURL(handle, url);
-//    }
-
     /**
      * Returns true if the handle has already been registered, false otherwise.
      * 

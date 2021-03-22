@@ -59,6 +59,10 @@ public class MakeDOI {
         for (Element elt : rootNode.getChildren()) {
             doiMappings.put(elt.getChildText("field"), elt);
         }
+
+        //set the namespace for xml
+        this.sNS = Namespace.getNamespace("http://datacite.org/schema/kernel-4");
+
     }
 
     /**
@@ -141,7 +145,7 @@ public class MakeDOI {
     public String getXMLStructure(String strNewHandle, BasicDoi basicDOI) throws IOException {
 
         Document docEAD = new Document();
-        Element rootNew = new Element("resource");
+        Element rootNew = new Element("resource", sNS);
         docEAD.setRootElement(rootNew);
         makeHeader(rootNew, strNewHandle);
 
@@ -152,10 +156,6 @@ public class MakeDOI {
         XMLOutputter outter = new XMLOutputter();
         outter.setFormat(Format.getPrettyFormat().setIndent("    "));
         String strOutput = outter.outputString(rootNew);
-
-        //hack: need to remove namespace def:
-        strOutput = strOutput.replace(":xxxx", "");
-        strOutput = strOutput.replace("xxxx:", "xmlns:");
 
         return strOutput;
     }
@@ -168,14 +168,11 @@ public class MakeDOI {
      * @param eltOriginal the original xml file to get the content from.
      */
     private void makeHeader(Element root, String strDOI) {
-        Namespace sNS = Namespace.getNamespace("xxxx", "http://datacite.org/schema/kernel-4");
         Namespace xsiNS = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-        //        root.setAttribute("xsi", "http://www.w3.org/2001/XMLSchema-instance", sNS);
-        root.addNamespaceDeclaration(sNS);
         root.setAttribute("schemaLocation", "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd", xsiNS);
 
         //DOI
-        Element ident = new Element("identifier");
+        Element ident = new Element("identifier", sNS);
         ident.setAttribute("identifierType", "DOI");
         ident.addContent(strDOI);
         root.addContent(ident);
@@ -190,7 +187,7 @@ public class MakeDOI {
      */
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
 
-        this.sNS = rootNew.getNamespace();
+//        this.sNS = rootNew.getNamespace();
 
         //Add the elts with children:
         Element titles = new Element("titles", sNS);
@@ -240,7 +237,7 @@ public class MakeDOI {
     private Element makeEditor(Metadata mdPerson) {
 
         Person editor = (Person) mdPerson;
-        Element eltEditor = new Element("contributor");
+        Element eltEditor = new Element("contributor", sNS);
         eltEditor.setAttribute("contributorType", "Editor");
 
         Element eltName = new Element("contributorName", sNS);
@@ -258,7 +255,7 @@ public class MakeDOI {
     private Element makeAuthor(Metadata mdPerson) {
 
         Person author = (Person) mdPerson;
-        Element eltAuthor = new Element("creator");
+        Element eltAuthor = new Element("creator", sNS);
         Element eltName = new Element("creatorName", sNS);
         String strName = author.getDisplayname();
         if (strName == null || strName.isEmpty()) {
