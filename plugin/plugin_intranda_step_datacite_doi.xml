@@ -7,11 +7,15 @@
 		<project>*</project>
 		<step>*</step>
 
+        <!-- authentication and main information -->
+        <!-- For testing: for deployment, remove "test" -->
+        <serviceAddress>https://mds.test.datacite.org/</serviceAddress>
+        
 		<!-- authentication and main information -->
-		<base>BASE</base>
+		<base>10.80831</base>
 		<url>https://viewer.goobi.io/idresolver?handle=</url>
-		<PASSWORD></PASSWORD>
-		<USERNAME></USERNAME>
+		<password></password>
+		<username></username>
 
 		<!-- configuration for Handles -->
 		<prefix>go</prefix>
@@ -25,8 +29,6 @@
         <!-- Type of DocStruct which should be given DOIs -->
         <typeForDOI>Article</typeForDOI>
 
-		<!-- display button to finish the task directly from within the entered plugin -->
-		<allowTaskFinishButtons>true</allowTaskFinishButtons>
 	</config>
 
 </config_plugin>

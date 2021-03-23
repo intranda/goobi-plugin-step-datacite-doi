@@ -47,8 +47,8 @@ public class DataciteDoiPluginTest {
     public static void main(String[] args)
             throws IOException, JDOMException, ConfigurationException, PreferencesException, ReadException, UGHException {
 
-        String strConfig = "/opt/digiverso/goobi/config/OLD_plugin_intranda_step_datacite_doi.xml";
-        String strMeta = "/opt/digiverso/goobi/metadata/25/meta.xml";
+        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi.xml";
+        String strMeta = "/opt/digiverso/goobi/test/meta.xml";
         String strRS = "/opt/digiverso/goobi/rulesets/ruleset_mpirg.xml";
 
         XMLConfiguration xmlConfig = new XMLConfiguration(strConfig); //ConfigPlugins.getPluginConfig("whatever");
@@ -59,6 +59,8 @@ public class DataciteDoiPluginTest {
         myconfig = xmlConfig.configurationAt("/config");
         MakeDOI maker = new MakeDOI(myconfig);
 
+        String[] typesForDOI = myconfig.getStringArray("typeForDOI");
+        
         Prefs prefs = new Prefs();
         prefs.loadPrefs(strRS);
         maker.setPrefs(prefs);

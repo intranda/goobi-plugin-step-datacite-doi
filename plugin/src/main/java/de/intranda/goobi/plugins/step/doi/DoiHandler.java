@@ -48,8 +48,8 @@ public class DoiHandler {
         this.separator = config.getString("separator");
         this.typeForDOI = config.getString("typeForDOI", "");
 
-        this.ao = new AccessObject(config.getString("USERNAME"), config.getString("PASSWORD"));
-        ao.SERVICE_ADDRESS = config.getString("SERVICE_ADDRESS", "https://mds.datacite.org/");
+        this.ao = new AccessObject(config.getString("username"), config.getString("password"));
+        ao.SERVICE_ADDRESS = config.getString("serviceAddress", "https://mds.datacite.org/");
 
         this.makeDOI = new MakeDOI(config);
         makeDOI.setPrefs(prefs);

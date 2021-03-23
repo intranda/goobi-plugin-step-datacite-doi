@@ -71,8 +71,8 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     @Getter
     @Setter
     private SubnodeConfiguration config;
-    private String typeForDOI;
     private DoiHandler handler;
+    private String[] typesForDOI;
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -100,7 +100,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             Process process = step.getProzess();
             Prefs prefs = process.getRegelsatz().getPreferences();
             String strUrn = config.getString("handleMetadata", "_urn");
-            typeForDOI = config.getString("typeForDOI", "");
+            typesForDOI = config.getStringArray("typeForDOI");
             urn = prefs.getMetadataTypeByName(strUrn);
 
             Fileformat fileformat = process.readMetadataFile();
@@ -158,12 +158,21 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     //Collect all sub structs of the type typeForDOI
     private void getArticles(ArrayList<DocStruct> lstArticles, DocStruct logical) {
 
-        if (typeForDOI.isEmpty() || logical.getType().getName().contentEquals(typeForDOI)) {
+        //If no specific types, just add the top doctype:
+        if (typesForDOI == null || typesForDOI.length == 0) {
             lstArticles.add(logical);
             return;
         }
-
-        //go through:
+        
+        //otherwise add all docstructs mentioned in typesForDOI
+        for (String strType : typesForDOI) {
+            if (logical.getType().getName().contentEquals(strType)) {
+                lstArticles.add(logical);
+                break;
+            }
+        }
+        
+        //Check children:
         if (logical.getAllChildren() != null) {
             for (DocStruct child : logical.getAllChildren()) {
                 getArticles(lstArticles, child);
