@@ -2,13 +2,16 @@ package de.intranda.goobi.plugins.step.datacite.mds.doi;
 
 import de.intranda.goobi.plugins.step.datacite.mds.AccessObject;
 import de.intranda.goobi.plugins.step.doi.DoiException;
+import de.intranda.goobi.plugins.step.doi.DoiHandler;
 import de.intranda.goobi.plugins.step.http.HTTPClient;
 import de.intranda.goobi.plugins.step.http.HTTPRequest;
 import de.intranda.goobi.plugins.step.http.HTTPResponse;
+import lombok.extern.log4j.Log4j;
 
 /**
  * DataCite Metadata Store API /doi resource. 
  */
+@Log4j
 public class PostDOI {
 
     private AccessObject ao;
@@ -36,7 +39,12 @@ public class PostDOI {
 			request.setContentType(contentType);
 			request.setBody(requestBody);
 			
+//			log.debug(request.toString());
+			
 			HTTPResponse response = HTTPClient.doHTTPRequest(request);
+			
+//			log.debug(response.toString());
+			
 			return response;
 		}
 		catch(Exception e){

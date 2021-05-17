@@ -1,15 +1,18 @@
 package de.intranda.goobi.plugins.step.datacite.mds.metadata;
 
 import de.intranda.goobi.plugins.step.datacite.mds.AccessObject;
+import de.intranda.goobi.plugins.step.datacite.mds.doi.PostDOI;
 import de.intranda.goobi.plugins.step.doi.DoiException;
 import de.intranda.goobi.plugins.step.http.HTTPClient;
 import de.intranda.goobi.plugins.step.http.HTTPRequest;
 import de.intranda.goobi.plugins.step.http.HTTPResponse;
+import lombok.extern.log4j.Log4j;
 
 /**
  * DataCite Metadata Store API /metadata resource.
  * 
  */
+@Log4j
 public class PostMetadata {  
     
     private AccessObject ao;
@@ -54,7 +57,12 @@ public class PostMetadata {
             request.setContentType("application/xml;charset=UTF-8");
             request.setBody(requestBody);
 
+//            log.debug(request.toString());
+            
             HTTPResponse response = HTTPClient.doHTTPRequest(request);
+           
+//            log.debug(response.toString());
+            
             return response;
             
         } catch (Exception e) {
