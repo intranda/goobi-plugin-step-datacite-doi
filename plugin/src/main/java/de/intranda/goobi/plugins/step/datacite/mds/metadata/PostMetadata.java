@@ -13,8 +13,8 @@ import lombok.extern.log4j.Log4j;
  * 
  */
 @Log4j
-public class PostMetadata {  
-    
+public class PostMetadata {
+
     private AccessObject ao;
 
     public PostMetadata(AccessObject ao) {
@@ -23,11 +23,11 @@ public class PostMetadata {
 
     public HTTPResponse forDoi(String doi, String metadata) throws DoiException {
         try {
-            String requestBody = metadata;  
+            String requestBody = metadata;
 
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.POST);
-            request.setURL(ao.SERVICE_ADDRESS + "metadata/" +  doi);
+            request.setURL(ao.SERVICE_ADDRESS + "metadata/" + doi);
 
             request.setUsername(ao.USERNAME);
             request.setPassword(ao.PASSWORD);
@@ -37,7 +37,7 @@ public class PostMetadata {
 
             HTTPResponse response = HTTPClient.doHTTPRequest(request);
             return response;
-            
+
         } catch (Exception e) {
             throw new DoiException(e);
         }
@@ -45,11 +45,11 @@ public class PostMetadata {
 
     public HTTPResponse forUpdatingDoi(String doi, String metadata) throws DoiException {
         try {
-            String requestBody = metadata;  
+            String requestBody = metadata;
 
             HTTPRequest request = new HTTPRequest();
             request.setMethod(HTTPRequest.Method.PUT);
-            request.setURL(ao.SERVICE_ADDRESS + "metadata/" +  doi);
+            request.setURL(ao.SERVICE_ADDRESS + "metadata/" + doi);
 
             request.setUsername(ao.USERNAME);
             request.setPassword(ao.PASSWORD);
@@ -57,14 +57,15 @@ public class PostMetadata {
             request.setContentType("application/xml;charset=UTF-8");
             request.setBody(requestBody);
 
-//            log.debug(request.toString());
-            
             HTTPResponse response = HTTPClient.doHTTPRequest(request);
-           
-//            log.debug(response.toString());
-            
+
+            if (response.getResponseCode() != HTTPResponse.CREATED) {
+                log.debug(request.toString());
+                log.debug(response.toString());
+            }
+
             return response;
-            
+
         } catch (Exception e) {
             throw new DoiException(e);
         }

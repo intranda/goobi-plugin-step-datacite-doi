@@ -39,12 +39,13 @@ public class PostDOI {
 			request.setContentType(contentType);
 			request.setBody(requestBody);
 			
-//			log.debug(request.toString());
-			
 			HTTPResponse response = HTTPClient.doHTTPRequest(request);
 			
-//			log.debug(response.toString());
-			
+            if (response.getResponseCode() != HTTPResponse.CREATED) {
+                log.debug(request.toString());
+                log.debug(response.toString());
+            }
+            
 			return response;
 		}
 		catch(Exception e){
