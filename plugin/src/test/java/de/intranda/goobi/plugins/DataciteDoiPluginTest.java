@@ -12,6 +12,7 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.goobi.beans.Ruleset;
+import org.goobi.production.enums.LogType;
 import org.jdom2.JDOMException;
 import org.junit.Test;
 
@@ -20,10 +21,13 @@ import de.intranda.goobi.plugins.step.datacite.mds.doi.PostDOI;
 import de.intranda.goobi.plugins.step.datacite.mds.metadata.GetMetadata;
 import de.intranda.goobi.plugins.step.datacite.mds.metadata.PostMetadata;
 import de.intranda.goobi.plugins.step.doi.BasicDoi;
+import de.intranda.goobi.plugins.step.doi.DataciteDoiStepPlugin;
 import de.intranda.goobi.plugins.step.doi.DoiException;
+import de.intranda.goobi.plugins.step.doi.DoiHandler;
 import de.intranda.goobi.plugins.step.doi.DoiListContent;
 import de.intranda.goobi.plugins.step.doi.MakeDOI;
 import de.intranda.goobi.plugins.step.http.HTTPResponse;
+import de.sub.goobi.helper.Helper;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.Fileformat;
@@ -37,20 +41,25 @@ import ugh.fileformats.mets.MetsMods;
 public class DataciteDoiPluginTest {
 
     @Test
-    public void testVersion() throws IOException {
+    public void testVersion() throws IOException, ConfigurationException, PreferencesException, ReadException, JDOMException, UGHException {
         String s = "xyz";
         assertNotNull(s);
 
+//        main(null);
     }
 
     //Testing:
     public static void main(String[] args)
             throws IOException, JDOMException, ConfigurationException, PreferencesException, ReadException, UGHException {
 
-        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi.xml";
+//        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi.xml";
         String strMeta = "/opt/digiverso/goobi/test/meta.xml";
-        String strRS = "/opt/digiverso/goobi/rulesets/ruleset_mpirg.xml";
+        String strRS = "/opt/digiverso/goobi/test/ruleset1.xml";
 
+        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi-journal.xml";
+//        String strMeta = "/opt/digiverso/goobi/test/meta-journal.xml";
+//        String strRS = "/opt/digiverso/goobi/test/ruleset-journal.xml";
+        
         XMLConfiguration xmlConfig = new XMLConfiguration(strConfig); //ConfigPlugins.getPluginConfig("whatever");
         xmlConfig.setExpressionEngine(new XPathExpressionEngine());
         xmlConfig.setReloadingStrategy(new FileChangedReloadingStrategy());
@@ -67,15 +76,52 @@ public class DataciteDoiPluginTest {
         
         MetsMods mm = new MetsMods(prefs);
         mm.read(strMeta);
-
+   
         DigitalDocument digitalDocument = mm.getDigitalDocument();
         DocStruct logical = digitalDocument.getLogicalDocStruct();
 
-        BasicDoi doi = maker.getBasicDoi(logical);
+        DocStruct anchor =null;
+        if (logical.getType().isAnchor()) {
+            anchor = logical;
+            logical = logical.getAllChildren().get(0);
+        }
+        
+        ArrayList<DocStruct> lstArticles = new ArrayList<DocStruct>();
+       DataciteDoiStepPlugin plugin = new DataciteDoiStepPlugin();
+       plugin.typesForDOI = myconfig.getStringArray("typeForDOI");
+       plugin.getArticles(lstArticles, logical);
+       
+        int i = 0;
 
-        String str = maker.getXMLStructure("new", doi);
+        for (DocStruct article : lstArticles) {
 
-        System.out.print(str);
+            //get the id of the article, or if it has none, the id of the parent:
+            String strId = plugin.getId(article, logical);
+
+            //add handle
+            BasicDoi doi = maker.getBasicDoi(article, logical, anchor);
+
+            String str = maker.getXMLStructure("new", doi);
+
+            System.out.print(str);
+            System.out.println();
+            System.out.println();
+//                strDOI = plugin.addDoi(article, strId, prefs, i, anchor);
+//                Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI created: " + strDOI);
+//                i++;
+////            }
+//            //otherwise just update the existing handle
+//            else {
+//                handler.updateData(article, strHandle, anchor);
+//                Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI updated: " + strHandle);
+//            }
+        }
+        
+//        BasicDoi doi = maker.getBasicDoi(logical, anchor);
+//
+//        String str = maker.getXMLStructure("new", doi);
+//
+//        System.out.print(str);
     }
 
 }

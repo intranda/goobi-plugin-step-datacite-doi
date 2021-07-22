@@ -144,20 +144,45 @@ The mapping configuration file looks something like this:
     </map>
 
     <!-- Optional fields: -->
+
     <map>
-        <field>editor</field>
-        <metadata>Editor</metadata>
+        <field>ISSN</field>
+        <metadata>anchor_ISSN</metadata>
     </map>
+
+    <listMap>
+        <field>editor</field>
+        <list>contributors</list>
+        <metadata>Editor</metadata>
+    </listMap>
+
+    <listMap dateType="Created">
+        <field>date</field>
+        <list>dates</list>
+        <metadata>Dating</metadata>
+        <altMetadata>PublicationYear</altMetadata>
+        <altMetadata>anchor_PublicationYear</altMetadata>
+    </listMap>
 
 </Mapping>
 ```
 
-For each `<map>`, the `<field>` specifies the name of the DOI element, and the `<metadata>` and `<altMetadata>` entries indicate from which metadata of the DocStruct the value should be taken, in order. If there is no such entry in the DocStruct, then the `<default>` value is taken. The value `"unkn"` for "unknown" is recommended by Datacite for data which is missing.
+For each `<map>`, the `<field>` specifies the name of the DOI element, and the `<metadata>` and `<altMetadata>` entries indicate from which metadata of the DocStruct the value should be taken, in order. If there is no such entry in the DocStruct, then the `<default>` value is taken. The value `"unkn"` for "unknown" is recommended by Datacite for data which is missing. If the <typeForDOI> is a chapter or other substructure of a containing docstruct, then a values if first looked for in the lower level (eg. chapter), and if none is found there then is is looked for in the parent docstruct.
+
+A `<metadata>` or `<altMetadata>` entry staring with `anchor_` will only be searched for in the documant's anchor file `meta_anchor.-xml`, if such a file exists.
 
 For the mandatory fields, a `<default>` _must_ be specified; for optional fields this is not necessary, but may be done if wished.
 
 The default entry `#CurrentYear` is a special case: it is replaced with the current year in the DOI.
 
+Elements of type `<listMap>` rather than  `<map>` are output in a list, named by the subentry `<list>`. If the `<listMap>` has an attribute, then this will be copied for every entry of the list. 
+In the example above this looks like:
+
+```
+    <dates>
+        <date dateType="Created">1847</date>
+    </dates>
+```
 
 ### Integration of the plugin into the workflow
 

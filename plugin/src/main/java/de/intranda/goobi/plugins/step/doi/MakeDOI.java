@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -38,9 +39,16 @@ public class MakeDOI {
     //dictionary of mappings
     private HashMap<String, Element> doiMappings;
 
+    //dictionary of list mappings    
+    private HashMap<String, Element> doiListMappings;
+
+    private ArrayList<String> lstMandatory;
+
     private Namespace sNS;
 
     private Prefs prefs;
+
+    private DocStruct anchor;
 
     /**
      * ctor: takes the mapping file as param.
@@ -56,12 +64,25 @@ public class MakeDOI {
         this.mapping = (Document) builder.build(xmlFile);
         this.doiMappings = new HashMap<String, Element>();
         Element rootNode = mapping.getRootElement();
-        for (Element elt : rootNode.getChildren()) {
+        for (Element elt : rootNode.getChildren("map")) {
             doiMappings.put(elt.getChildText("field"), elt);
+        }
+
+        this.doiListMappings = new HashMap<String, Element>();
+        for (Element elt : rootNode.getChildren("listMap")) {
+            doiListMappings.put(elt.getChildText("field"), elt);
         }
 
         //set the namespace for xml
         this.sNS = Namespace.getNamespace("http://datacite.org/schema/kernel-4");
+
+        lstMandatory = new ArrayList<String>();
+        lstMandatory.add("title");
+        lstMandatory.add("author");
+        lstMandatory.add("publisher");
+        lstMandatory.add("publicationYear");
+        lstMandatory.add("inst");
+        lstMandatory.add("resourceType");
 
     }
 
@@ -187,7 +208,7 @@ public class MakeDOI {
      */
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
 
-//        this.sNS = rootNew.getNamespace();
+        //        this.sNS = rootNew.getNamespace();
 
         //Add the elts with children:
         Element titles = new Element("titles", sNS);
@@ -294,22 +315,51 @@ public class MakeDOI {
      * Given the root of an xml tree, get the basic DOI info.
      * 
      * @param physical
+     * @param anchor
+     * @param anchor
      * @return
      * @throws MetadataTypeNotAllowedException
      */
-    public BasicDoi getBasicDoi(DocStruct physical) throws MetadataTypeNotAllowedException {
-        BasicDoi doi = new BasicDoi();
-        doi.TITLES = getValues("title", physical);
-        //        doi.CREATORS = getValues("author", physical);
-        doi.PUBLISHER = getValues("publisher", physical);
-        doi.PUBLICATIONYEAR = getValues("publicationYear", physical);
-        doi.RESOURCETYPE = getValues("resourceType", physical);
+    public BasicDoi getBasicDoi(DocStruct physical, DocStruct logical, DocStruct anchor) throws MetadataTypeNotAllowedException {
 
-        doi.lstContent = getContentLists(physical);
+        this.anchor = anchor;
+
+        BasicDoi doi = new BasicDoi();
+        doi.TITLES = getValues("title", physical, logical);
+        //        doi.CREATORS = getValues("author", physical);
+        doi.PUBLISHER = getValues("publisher", physical, logical);
+        doi.PUBLICATIONYEAR = getValues("publicationYear", physical, logical);
+        doi.RESOURCETYPE = getValues("resourceType", physical, logical);
+
+        doi.lstContent = getContentLists(physical, logical);
+
+        addValuePairs(doi, physical, logical);
         return doi;
     }
 
-    private List<DoiListContent> getContentLists(DocStruct doc) throws MetadataTypeNotAllowedException {
+    private void addValuePairs(BasicDoi doi, DocStruct physical, DocStruct logical) {
+        for (String key : doiMappings.keySet()) {
+
+            if (lstMandatory.contains(key)) {
+                continue;
+            }
+            //            if (key.contentEquals("editor")) {
+            //                continue;
+            //            }
+
+            List<String> values = getValues(key, physical, logical);
+
+            if (values == null || values.isEmpty()) {
+                continue;
+            }
+
+            for (String value : values) {
+                doi.addValuePair(key, value);
+            }
+        }
+    }
+
+    private List<DoiListContent> getContentLists(DocStruct doc, DocStruct logical) throws MetadataTypeNotAllowedException {
 
         List<DoiListContent> lstContent = new ArrayList<DoiListContent>();
 
@@ -324,22 +374,54 @@ public class MakeDOI {
 
         lstContent.add(authors);
 
-        //then (optional) editors:
-        if (doiMappings.containsKey("editor")) {
+        //        //then (optional) editors:
+        //        if (doiMappings.containsKey("editor")) {
+        //
+        //            DoiListContent editors = new DoiListContent("contributors");
+        //            for (Metadata mdEditor : getMetadataValues("editor", doc)) {
+        //
+        //                Element eltEditor = makeEditor(mdEditor);
+        //                editors.lstEntries.add(eltEditor);
+        //            }
+        //
+        //            lstContent.add(editors);
+        //        }
+        //        
+        //then others:
+        for (String key : doiListMappings.keySet()) {
 
-            DoiListContent editors = new DoiListContent("contributors");
-            for (Metadata mdEditor : getMetadataValues("editor", doc)) {
-
-                Element eltEditor = makeEditor(mdEditor);
-                editors.lstEntries.add(eltEditor);
+            if (lstMandatory.contains(key)) {
+                continue;
             }
 
-            lstContent.add(editors);
+            if (key.contentEquals("editor")) {
+                DoiListContent editors = new DoiListContent("contributors");
+                for (Metadata mdEditor : getMetadataValues("editor", doc)) {
+
+                    Element eltEditor = makeEditor(mdEditor);
+                    editors.lstEntries.add(eltEditor);
+                }
+
+                lstContent.add(editors);
+            } else {
+                Element elt = doiListMappings.get(key);
+                DoiListContent list = new DoiListContent(elt.getChildText("list"));
+                for (String strValue : getValues(key, doc, logical)) {
+
+                    Element eltNew = new Element(key, sNS);
+                    eltNew.addContent(strValue);
+                    for (Attribute attribute : elt.getAttributes()) {
+                        eltNew.setAttribute(attribute.getName(), attribute.getValue());
+                    }
+
+                    list.lstEntries.add(eltNew);
+                }
+
+                lstContent.add(list);
+            }
         }
 
-        if (lstContent.isEmpty())
-
-        {
+        if (lstContent.isEmpty()) {
             return null;
         }
         //otherwise
@@ -392,16 +474,26 @@ public class MakeDOI {
     }
 
     /**
-     * Get the values of metadata for the specified field, in the specified struct.
+     * Get the values of metadata for the specified field, in the specified struct. If the value is not found there (eg in the chapter), then look for
+     * it in the "logical" parent.
+     * 
+     * @param logical
      */
-    private List<String> getValues(String field, DocStruct struct) {
+    private List<String> getValues(String field, DocStruct struct, DocStruct logical) {
+        
+        HashMap<String, Element> mapping = doiMappings;
+        if (!mapping.containsKey(field)) {
+            mapping = doiListMappings;
+        }
+        
         ArrayList<String> lstDefault = new ArrayList<String>();
         String metadata = field;
-        Element eltMap = doiMappings.get(field);
+        Element eltMap = mapping.get(field);
         if (eltMap != null) {
             //set up the default value:
-            String strDefault = getDefault(eltMap);            
-            if (!strDefault.isEmpty()) {
+            String strDefault = getDefault(eltMap);
+
+            if (strDefault != null && !strDefault.isEmpty()) {
                 lstDefault.add(strDefault);
             }
             //try to find the local value:
@@ -424,17 +516,33 @@ public class MakeDOI {
             }
         }
 
+        //empty? then look in logical parent:
+        lstLocalValues = getStringMetadataFromMets(logical, metadata);
+        if (!lstLocalValues.isEmpty()) {
+            return lstLocalValues;
+        }
+
+        if (eltMap != null) {
+            //could not find first choice? then try alternatives
+            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                lstLocalValues = getStringMetadataFromMets(logical, eltAlt.getText());
+                if (!lstLocalValues.isEmpty()) {
+                    return lstLocalValues;
+                }
+            }
+        }
+
         //otherwise just return default
         return lstDefault;
     }
 
     private String getDefault(Element eltMap) {
         String strDefault = eltMap.getChildText("default");
-        
+
         if (strDefault != null && strDefault.contentEquals("#CurrentYear")) {
             strDefault = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
         }
-        
+
         return strDefault;
     }
 
@@ -466,12 +574,23 @@ public class MakeDOI {
      */
     private List<String> getStringMetadataFromMets(DocStruct struct, String name) {
 
+        ArrayList<String> lstValues = new ArrayList<String>();
+
+        if (name == null) {
+            return lstValues;
+        }
+
+        //if the metadata is for the anchor, then chekc anchor first:
+        if (this.anchor != null && name.startsWith("anchor_")) {
+            struct = anchor;
+            name = name.replace("anchor_", "");
+        }
+
         if (fieldIsPerson(name)) {
             return getPersonFromMets(struct, name);
         }
 
         //no values?
-        ArrayList<String> lstValues = new ArrayList<String>();
         if (struct.getAllMetadata() == null) {
             return lstValues;
         }

@@ -72,7 +72,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     @Setter
     private SubnodeConfiguration config;
     private DoiHandler handler;
-    private String[] typesForDOI;
+    public String[] typesForDOI;
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -106,7 +106,10 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             Fileformat fileformat = process.readMetadataFile();
             DigitalDocument digitalDocument = fileformat.getDigitalDocument();
             DocStruct logical = digitalDocument.getLogicalDocStruct();
+            
+            DocStruct anchor =null;
             if (logical.getType().isAnchor()) {
+                anchor = logical;
                 logical = logical.getAllChildren().get(0);
             }
 
@@ -126,13 +129,13 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 String strHandle = getHandle(article);
                 //If not, create a new handle
                 if (strHandle == null) {
-                    strDOI = addDoi(article, strId, prefs, i);
+                    strDOI = addDoi(article, strId, prefs, i, logical, anchor);
                     Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI created: " + strDOI);
                     i++;
                 }
                 //otherwise just update the existing handle
                 else {
-                    handler.updateData(article, strHandle);
+                    handler.updateData(article, strHandle, logical, anchor);
                     Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI updated: " + strHandle);
                 }
             }
@@ -156,7 +159,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     }
 
     //Collect all sub structs of the type typeForDOI
-    private void getArticles(ArrayList<DocStruct> lstArticles, DocStruct logical) {
+    public void getArticles(ArrayList<DocStruct> lstArticles, DocStruct logical) {
 
         //If no specific types, just add the top doctype:
         if (typesForDOI == null || typesForDOI.length == 0) {
@@ -206,13 +209,15 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * 
      * @param prefs
      * @param iIndex
+     * @param anchor 
+     * @param anchor 
      * 
      * @return Returns the handle.
      * @throws DoiException
      * @throws JDOMException
      * @throws UGHException
      */
-    public String addDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex)
+    public String addDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex, DocStruct logical, DocStruct anchor)
             throws HandleException, IOException, JDOMException, DoiException, UGHException {
 
         //Make a handle
@@ -227,7 +232,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             strPostfix += name + separator;
         }
 
-        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex);
+        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex,logical,  anchor);
         setHandle(docstruct, strHandle);
 
         return strHandle;
