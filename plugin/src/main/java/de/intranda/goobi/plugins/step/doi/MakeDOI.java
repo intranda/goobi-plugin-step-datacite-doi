@@ -271,6 +271,28 @@ public class MakeDOI {
     }
 
     /*
+     * Specific structure for an Journal
+     */
+    private Element makeJournal(Metadata md) {
+
+        Element eltJournal = new Element("relatedItem", sNS);
+        eltJournal.setAttribute("relationType", "IsPublishedIn");
+        eltJournal.setAttribute("relatedItemType", "Journal");
+        
+//        Element eltTitles = new Element("titles", sNS);
+//        Element eltTitle = new Element("title", sNS);
+//        eltTitle.addContent(newContent)
+//        eltJournal.setAttribute("relationType", "IsPublishedIn");
+//        
+//        eltName.addContent(editor.getDisplayname());
+//        eltEditor.addContent(eltName);
+//
+//        addName(editor, eltEditor);
+
+        return eltJournal;
+    }
+    
+    /*
      * Specific structure for an Author
      */
     private Element makeAuthor(Metadata mdPerson) {
@@ -374,19 +396,6 @@ public class MakeDOI {
 
         lstContent.add(authors);
 
-        //        //then (optional) editors:
-        //        if (doiMappings.containsKey("editor")) {
-        //
-        //            DoiListContent editors = new DoiListContent("contributors");
-        //            for (Metadata mdEditor : getMetadataValues("editor", doc)) {
-        //
-        //                Element eltEditor = makeEditor(mdEditor);
-        //                editors.lstEntries.add(eltEditor);
-        //            }
-        //
-        //            lstContent.add(editors);
-        //        }
-        //        
         //then others:
         for (String key : doiListMappings.keySet()) {
 
@@ -403,7 +412,18 @@ public class MakeDOI {
                 }
 
                 lstContent.add(editors);
-            } else {
+            } 
+//            else if (key.contentEquals("journal")) {
+//                DoiListContent journal = new DoiListContent("relatedItems");
+//                for (Metadata mdJournal : getMetadataValues("journal", doc)) {
+//
+//                    Element eltJournal = makeJournal(mdJournal);
+//                    journal.lstEntries.add(eltJournal);
+//                }
+//
+//                lstContent.add(journal);
+//            } 
+            else {
                 Element elt = doiListMappings.get(key);
                 DoiListContent list = new DoiListContent(elt.getChildText("list"));
                 for (String strValue : getValues(key, doc, logical)) {

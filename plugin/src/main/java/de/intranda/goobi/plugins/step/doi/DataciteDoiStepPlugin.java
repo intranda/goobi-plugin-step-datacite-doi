@@ -106,8 +106,8 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             Fileformat fileformat = process.readMetadataFile();
             DigitalDocument digitalDocument = fileformat.getDigitalDocument();
             DocStruct logical = digitalDocument.getLogicalDocStruct();
-            
-            DocStruct anchor =null;
+
+            DocStruct anchor = null;
             if (logical.getType().isAnchor()) {
                 anchor = logical;
                 logical = logical.getAllChildren().get(0);
@@ -115,6 +115,10 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
 
             ArrayList<DocStruct> lstArticles = new ArrayList<DocStruct>();
             getArticles(lstArticles, logical);
+
+            if (lstArticles.isEmpty()) {
+                Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "No DOIs created");
+            }
             int i = 0;
 
             this.handler = new DoiHandler(config, prefs);
@@ -166,7 +170,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             lstArticles.add(logical);
             return;
         }
-        
+
         //otherwise add all docstructs mentioned in typesForDOI
         for (String strType : typesForDOI) {
             if (logical.getType().getName().contentEquals(strType)) {
@@ -174,7 +178,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 break;
             }
         }
-        
+
         //Check children:
         if (logical.getAllChildren() != null) {
             for (DocStruct child : logical.getAllChildren()) {
@@ -209,8 +213,8 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * 
      * @param prefs
      * @param iIndex
-     * @param anchor 
-     * @param anchor 
+     * @param anchor
+     * @param anchor
      * 
      * @return Returns the handle.
      * @throws DoiException
@@ -232,7 +236,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             strPostfix += name + separator;
         }
 
-        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex,logical,  anchor);
+        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex, logical, anchor);
         setHandle(docstruct, strHandle);
 
         return strHandle;

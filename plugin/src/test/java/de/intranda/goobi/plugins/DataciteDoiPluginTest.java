@@ -53,12 +53,12 @@ public class DataciteDoiPluginTest {
             throws IOException, JDOMException, ConfigurationException, PreferencesException, ReadException, UGHException {
 
 //        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi.xml";
-        String strMeta = "/opt/digiverso/goobi/test/meta.xml";
-        String strRS = "/opt/digiverso/goobi/test/ruleset1.xml";
+//        String strMeta = "/opt/digiverso/goobi/test/meta.xml";
+//        String strRS = "/opt/digiverso/goobi/test/ruleset1.xml";
 
         String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi-journal.xml";
-//        String strMeta = "/opt/digiverso/goobi/test/meta-journal.xml";
-//        String strRS = "/opt/digiverso/goobi/test/ruleset-journal.xml";
+        String strMeta = "/opt/digiverso/goobi/test/meta-journal.xml";
+        String strRS = "/opt/digiverso/goobi/test/ruleset-journal.xml";
         
         XMLConfiguration xmlConfig = new XMLConfiguration(strConfig); //ConfigPlugins.getPluginConfig("whatever");
         xmlConfig.setExpressionEngine(new XPathExpressionEngine());
