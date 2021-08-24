@@ -145,17 +145,30 @@ The mapping configuration file looks something like this:
 
     <!-- Optional fields: -->
 
-    <map>
-        <field>ISSN</field>
-        <metadata>anchor_ISSN</metadata>
-    </map>
-
     <listMap>
         <field>editor</field>
         <list>contributors</list>
         <metadata>Editor</metadata>
     </listMap>
 
+    <listMap relatedIdentifierType="ISSN" relationType="IsPublishedIn">
+        <field>relatedIdentifier</field>
+        <list>relatedIdentifiers</list>
+        <metadata>anchor_ISSN</metadata>
+    </listMap>
+
+    <listMap descriptionType="SeriesInformation">
+        <field>description</field>
+        <list>descriptions</list>
+        <metadata>anchor_TitleDocMain</metadata>
+    </listMap>
+
+    <listMap descriptionType="SeriesInformation">
+        <field>description</field>
+        <list>descriptions</list>
+        <metadata>CurrentNo</metadata>
+    </listMap>
+    
     <listMap dateType="Created">
         <field>date</field>
         <list>dates</list>
@@ -169,7 +182,7 @@ The mapping configuration file looks something like this:
 
 For each `<map>`, the `<field>` specifies the name of the DOI element, and the `<metadata>` and `<altMetadata>` entries indicate from which metadata of the DocStruct the value should be taken, in order. If there is no such entry in the DocStruct, then the `<default>` value is taken. The value `"unkn"` for "unknown" is recommended by Datacite for data which is missing. If the <typeForDOI> is a chapter or other substructure of a containing docstruct, then a values if first looked for in the lower level (eg. chapter), and if none is found there then is is looked for in the parent docstruct.
 
-A `<metadata>` or `<altMetadata>` entry staring with `anchor_` will only be searched for in the documant's anchor file `meta_anchor.-xml`, if such a file exists.
+A `<metadata>` or `<altMetadata>` entry staring with `anchor_` will only be searched for in the documant's anchor file `meta_anchor.xml`, if such a file exists.
 
 For the mandatory fields, a `<default>` _must_ be specified; for optional fields this is not necessary, but may be done if wished.
 

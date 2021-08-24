@@ -56,9 +56,9 @@ public class DataciteDoiPluginTest {
 //        String strMeta = "/opt/digiverso/goobi/test/meta.xml";
 //        String strRS = "/opt/digiverso/goobi/test/ruleset1.xml";
 
-        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi-journal.xml";
-        String strMeta = "/opt/digiverso/goobi/test/meta-journal.xml";
-        String strRS = "/opt/digiverso/goobi/test/ruleset-journal.xml";
+        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi-test.xml";
+        String strMeta = "/opt/digiverso/goobi/test/stutt/meta.xml";
+        String strRS = "/opt/digiverso/goobi/test/stutt/ruleset-stutt.xml";
         
         XMLConfiguration xmlConfig = new XMLConfiguration(strConfig); //ConfigPlugins.getPluginConfig("whatever");
         xmlConfig.setExpressionEngine(new XPathExpressionEngine());

@@ -37,10 +37,10 @@ public class MakeDOI {
     private Document mapping;
 
     //dictionary of mappings
-    private HashMap<String, Element> doiMappings;
+    private HashMap<String, ArrayList<Element>> doiMappings;
 
     //dictionary of list mappings    
-    private HashMap<String, Element> doiListMappings;
+    private HashMap<String, ArrayList<Element>> doiListMappings;
 
     private ArrayList<String> lstMandatory;
 
@@ -62,15 +62,31 @@ public class MakeDOI {
         SAXBuilder builder = new SAXBuilder();
         File xmlFile = new File(mapFile);
         this.mapping = (Document) builder.build(xmlFile);
-        this.doiMappings = new HashMap<String, Element>();
+        this.doiMappings = new HashMap<String, ArrayList<Element>>();
         Element rootNode = mapping.getRootElement();
+
         for (Element elt : rootNode.getChildren("map")) {
-            doiMappings.put(elt.getChildText("field"), elt);
+            ArrayList<Element> lstElts = new ArrayList<Element>();
+            String key = elt.getChildText("field");
+            if (doiMappings.containsKey(key)) {
+                lstElts = doiMappings.get(key);
+            }
+            lstElts.add(elt);
+
+            doiMappings.put(key, lstElts);
         }
 
-        this.doiListMappings = new HashMap<String, Element>();
+        this.doiListMappings = new HashMap<String, ArrayList<Element>>();
         for (Element elt : rootNode.getChildren("listMap")) {
-            doiListMappings.put(elt.getChildText("field"), elt);
+            ArrayList<Element> lstElts = new ArrayList<Element>();
+            String key = elt.getChildText("field");
+            if (doiListMappings.containsKey(key)) {
+                lstElts = doiListMappings.get(key);
+            }
+
+            lstElts.add(elt);
+
+            doiListMappings.put(key, lstElts);
         }
 
         //set the namespace for xml
@@ -94,37 +110,44 @@ public class MakeDOI {
      * @return
      */
     public List<String> getValues(String field, Element root) {
-        Element eltMap = doiMappings.get(field);
-        if (eltMap == null) {
-            return null;
-        }
 
-        //set up the default value:
-        String strDefault = eltMap.getChildText("default");
         ArrayList<String> lstDefault = new ArrayList<String>();
-        if (!strDefault.isEmpty()) {
-            lstDefault.add(strDefault);
-        }
 
-        //try to find the local value:
-        String metadata = eltMap.getChildText("metadata");
+        for (Element eltMap : doiMappings.get(field)) {
 
-        //no local value set? then return default:
-        if (metadata.isEmpty()) {
-            return lstDefault;
-        }
+            if (eltMap == null) {
+                return null;
+            }
 
-        //otherwise
-        List<String> lstLocalValues = getValueRecursive(root, metadata);
-        if (!lstLocalValues.isEmpty()) {
-            return lstLocalValues;
-        }
+            //set up the default value:
+            String strDefault = eltMap.getChildText("default");
 
-        //could not find first choice? then try alternatives
-        for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-            lstLocalValues = getValueRecursive(root, eltAlt.getText());
+            if (!strDefault.isEmpty()) {
+                lstDefault.add(strDefault);
+            }
+
+            //try to find the local value:
+            String metadata = eltMap.getChildText("metadata");
+
+            //no local value set? then return default:
+            if (metadata.isEmpty()) {
+                continue;
+            }
+
+            //otherwise
+            List<String> lstLocalValues = getValueRecursive(root, metadata);
             if (!lstLocalValues.isEmpty()) {
-                return lstLocalValues;
+                lstDefault.addAll(lstLocalValues);
+                continue;
+            }
+
+            //could not find first choice? then try alternatives
+            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                lstLocalValues = getValueRecursive(root, eltAlt.getText());
+                if (!lstLocalValues.isEmpty()) {
+                    lstDefault.addAll(lstLocalValues);
+                    continue;
+                }
             }
         }
 
@@ -278,20 +301,20 @@ public class MakeDOI {
         Element eltJournal = new Element("relatedItem", sNS);
         eltJournal.setAttribute("relationType", "IsPublishedIn");
         eltJournal.setAttribute("relatedItemType", "Journal");
-        
-//        Element eltTitles = new Element("titles", sNS);
-//        Element eltTitle = new Element("title", sNS);
-//        eltTitle.addContent(newContent)
-//        eltJournal.setAttribute("relationType", "IsPublishedIn");
-//        
-//        eltName.addContent(editor.getDisplayname());
-//        eltEditor.addContent(eltName);
-//
-//        addName(editor, eltEditor);
+
+        //        Element eltTitles = new Element("titles", sNS);
+        //        Element eltTitle = new Element("title", sNS);
+        //        eltTitle.addContent(newContent)
+        //        eltJournal.setAttribute("relationType", "IsPublishedIn");
+        //        
+        //        eltName.addContent(editor.getDisplayname());
+        //        eltEditor.addContent(eltName);
+        //
+        //        addName(editor, eltEditor);
 
         return eltJournal;
     }
-    
+
     /*
      * Specific structure for an Author
      */
@@ -403,42 +426,56 @@ public class MakeDOI {
                 continue;
             }
 
-            if (key.contentEquals("editor")) {
-                DoiListContent editors = new DoiListContent("contributors");
-                for (Metadata mdEditor : getMetadataValues("editor", doc)) {
+            //            if (key.contentEquals("editor")) {
+            //                DoiListContent editors = new DoiListContent("contributors");
+            //                for (Metadata mdEditor : getMetadataValues("editor", doc)) {
+            //
+            //                    Element eltEditor = makeEditor(mdEditor);
+            //                    editors.lstEntries.add(eltEditor);
+            //                }
+            //
+            //                lstContent.add(editors);
+            //            }
+            //            else if (key.contentEquals("journal")) {
+            //                DoiListContent journal = new DoiListContent("relatedItems");
+            //                for (Metadata mdJournal : getMetadataValues("journal", doc)) {
+            //
+            //                    Element eltJournal = makeJournal(mdJournal);
+            //                    journal.lstEntries.add(eltJournal);
+            //                }
+            //
+            //                lstContent.add(journal);
+            //            } 
+            //            else {
+            for (Element elt : doiListMappings.get(key)) {
 
-                    Element eltEditor = makeEditor(mdEditor);
-                    editors.lstEntries.add(eltEditor);
-                }
+                if (key.contentEquals("editor")) {
+                    DoiListContent editors = new DoiListContent("contributors");
+                    for (Metadata mdEditor : getMetadataValues("editor", doc)) {
 
-                lstContent.add(editors);
-            } 
-//            else if (key.contentEquals("journal")) {
-//                DoiListContent journal = new DoiListContent("relatedItems");
-//                for (Metadata mdJournal : getMetadataValues("journal", doc)) {
-//
-//                    Element eltJournal = makeJournal(mdJournal);
-//                    journal.lstEntries.add(eltJournal);
-//                }
-//
-//                lstContent.add(journal);
-//            } 
-            else {
-                Element elt = doiListMappings.get(key);
-                DoiListContent list = new DoiListContent(elt.getChildText("list"));
-                for (String strValue : getValues(key, doc, logical)) {
-
-                    Element eltNew = new Element(key, sNS);
-                    eltNew.addContent(strValue);
-                    for (Attribute attribute : elt.getAttributes()) {
-                        eltNew.setAttribute(attribute.getName(), attribute.getValue());
+                        Element eltEditor = makeEditor(mdEditor);
+                        editors.lstEntries.add(eltEditor);
                     }
 
-                    list.lstEntries.add(eltNew);
-                }
+                    lstContent.add(editors);
+                } else {
+                    DoiListContent list = new DoiListContent(elt.getChildText("list"));
+                    for (String strValue : getValues(key, doc, logical)) {
 
-                lstContent.add(list);
+                        Element eltNew = new Element(key, sNS);
+                        eltNew.addContent(strValue);
+                        for (Attribute attribute : elt.getAttributes()) {
+                            eltNew.setAttribute(attribute.getName(), attribute.getValue());
+                        }
+
+                        list.lstEntries.add(eltNew);
+                    }
+                    lstContent.add(list);
+                    //have gone through all children for this key here already, do not repeat!
+                    break;
+                }
             }
+            //            }
         }
 
         if (lstContent.isEmpty()) {
@@ -456,41 +493,56 @@ public class MakeDOI {
     private List<Metadata> getMetadataValues(String field, DocStruct struct) throws MetadataTypeNotAllowedException {
         ArrayList<Metadata> lstDefault = new ArrayList<Metadata>();
         String metadata = field;
-        Element eltMap = doiMappings.get(field);
-        if (eltMap != null) {
-            String strDefault = getDefault(eltMap);
-            if (strDefault != null && !strDefault.isEmpty()) {
-                MetadataType type = prefs.getMetadataTypeByName(eltMap.getChildText("metadata"));
-                Metadata mdDefault = new Metadata(type);
-                if (type.getIsPerson()) {
-                    mdDefault = new Person(type);
+
+        HashMap<String, ArrayList<Element>> mapping = doiMappings;
+        if (!mapping.containsKey(field)) {
+            mapping = doiListMappings;
+        }
+
+        ArrayList<Metadata> lstReturn = new ArrayList<Metadata>();
+         
+        for (Element eltMap : mapping.get(field)) {
+
+            if (eltMap != null) {
+                String strDefault = getDefault(eltMap);
+                if (strDefault != null && !strDefault.isEmpty()) {
+                    MetadataType type = prefs.getMetadataTypeByName(eltMap.getChildText("metadata"));
+                    Metadata mdDefault = new Metadata(type);
+                    if (type.getIsPerson()) {
+                        mdDefault = new Person(type);
+                    }
+
+                    mdDefault.setValue(strDefault);
+                    lstDefault.add(mdDefault);
                 }
-
-                mdDefault.setValue(strDefault);
-                lstDefault.add(mdDefault);
+                //try to find the local value:
+                metadata = eltMap.getChildText("metadata");
             }
-            //try to find the local value:
-            metadata = eltMap.getChildText("metadata");
-        }
 
-        List<Metadata> lstLocalValues = getMetadataFromMets(struct, metadata);
+            ArrayList<Metadata> lstLocalValues = getMetadataFromMets(struct, metadata);
 
-        if (!lstLocalValues.isEmpty()) {
-            return lstLocalValues;
-        }
+            if (!lstLocalValues.isEmpty()) {
+                lstReturn.addAll(lstLocalValues);
+                continue;
+            }
 
-        if (eltMap != null) {
-            //could not find first choice? then try alternatives
-            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-                lstLocalValues = getMetadataFromMets(struct, eltAlt.getText());
-                if (!lstLocalValues.isEmpty()) {
-                    return lstLocalValues;
+            if (eltMap != null) {
+                //could not find first choice? then try alternatives
+                for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                    lstLocalValues = getMetadataFromMets(struct, eltAlt.getText());
+                    if (!lstLocalValues.isEmpty()) {
+                        lstReturn.addAll(lstLocalValues);
+                        continue;
+                    }
                 }
             }
         }
 
         //otherwise just return default
-        return lstDefault;
+        if (lstReturn.isEmpty())
+            lstReturn = lstDefault ;
+        
+        return lstReturn;
     }
 
     /**
@@ -500,60 +552,71 @@ public class MakeDOI {
      * @param logical
      */
     private List<String> getValues(String field, DocStruct struct, DocStruct logical) {
-        
-        HashMap<String, Element> mapping = doiMappings;
+
+        HashMap<String, ArrayList<Element>> mapping = doiMappings;
         if (!mapping.containsKey(field)) {
             mapping = doiListMappings;
         }
-        
+
+        ArrayList<String> lstReturn = new ArrayList<String>();
         ArrayList<String> lstDefault = new ArrayList<String>();
         String metadata = field;
-        Element eltMap = mapping.get(field);
-        if (eltMap != null) {
-            //set up the default value:
-            String strDefault = getDefault(eltMap);
 
-            if (strDefault != null && !strDefault.isEmpty()) {
-                lstDefault.add(strDefault);
+        for (Element eltMap : mapping.get(field)) {
+
+            if (eltMap != null) {
+                //set up the default value:
+                String strDefault = getDefault(eltMap);
+
+                if (strDefault != null && !strDefault.isEmpty()) {
+                    lstDefault.add(strDefault);
+                }
+                //try to find the local value:
+                metadata = eltMap.getChildText("metadata");
             }
-            //try to find the local value:
-            metadata = eltMap.getChildText("metadata");
-        }
 
-        List<String> lstLocalValues = getStringMetadataFromMets(struct, metadata);
+            List<String> lstLocalValues = getStringMetadataFromMets(struct, metadata);
 
-        if (!lstLocalValues.isEmpty()) {
-            return lstLocalValues;
-        }
+            if (!lstLocalValues.isEmpty()) {
+                lstReturn.addAll(lstLocalValues);
+                continue;
+            }
 
-        if (eltMap != null) {
-            //could not find first choice? then try alternatives
-            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-                lstLocalValues = getStringMetadataFromMets(struct, eltAlt.getText());
-                if (!lstLocalValues.isEmpty()) {
-                    return lstLocalValues;
+            if (eltMap != null) {
+                //could not find first choice? then try alternatives
+                for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                    lstLocalValues = getStringMetadataFromMets(struct, eltAlt.getText());
+                    if (!lstLocalValues.isEmpty()) {
+                        lstReturn.addAll(lstLocalValues);
+                        continue;
+                    }
+                }
+            }
+
+            //empty? then look in logical parent:
+            lstLocalValues = getStringMetadataFromMets(logical, metadata);
+            if (!lstLocalValues.isEmpty()) {
+                lstReturn.addAll(lstLocalValues);
+                continue;
+            }
+
+            if (eltMap != null) {
+                //could not find first choice? then try alternatives
+                for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                    lstLocalValues = getStringMetadataFromMets(logical, eltAlt.getText());
+                    if (!lstLocalValues.isEmpty()) {
+                        lstReturn.addAll(lstLocalValues);
+                        continue;
+                    }
                 }
             }
         }
-
-        //empty? then look in logical parent:
-        lstLocalValues = getStringMetadataFromMets(logical, metadata);
-        if (!lstLocalValues.isEmpty()) {
-            return lstLocalValues;
-        }
-
-        if (eltMap != null) {
-            //could not find first choice? then try alternatives
-            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-                lstLocalValues = getStringMetadataFromMets(logical, eltAlt.getText());
-                if (!lstLocalValues.isEmpty()) {
-                    return lstLocalValues;
-                }
-            }
-        }
-
+        
         //otherwise just return default
-        return lstDefault;
+        if (lstReturn.isEmpty())
+            lstReturn = lstDefault ;
+        
+        return lstReturn;
     }
 
     private String getDefault(Element eltMap) {
@@ -569,7 +632,7 @@ public class MakeDOI {
     /**
      * Get all metadata of type "name" in the specified struct.
      */
-    private List<Metadata> getMetadataFromMets(DocStruct struct, String name) {
+    private ArrayList<Metadata> getMetadataFromMets(DocStruct struct, String name) {
 
         if (fieldIsPerson(name)) {
             return getMetadataPersonFromMets(struct, name);
@@ -592,7 +655,7 @@ public class MakeDOI {
     /**
      * Get all metadata of type "name" in the specified struct.
      */
-    private List<String> getStringMetadataFromMets(DocStruct struct, String name) {
+    private ArrayList<String> getStringMetadataFromMets(DocStruct struct, String name) {
 
         ArrayList<String> lstValues = new ArrayList<String>();
 
@@ -642,7 +705,7 @@ public class MakeDOI {
     /**
      * Get all persons of type "name" in the specified struct.
      */
-    private List<String> getPersonFromMets(DocStruct struct, String name) {
+    private ArrayList<String> getPersonFromMets(DocStruct struct, String name) {
 
         ArrayList<String> lstValues = new ArrayList<String>();
 
@@ -669,7 +732,7 @@ public class MakeDOI {
     /**
      * Get all persons of type "name" in the specified struct.
      */
-    private List<Metadata> getMetadataPersonFromMets(DocStruct struct, String name) {
+    private ArrayList<Metadata> getMetadataPersonFromMets(DocStruct struct, String name) {
 
         ArrayList<Metadata> lstValues = new ArrayList<Metadata>();
 
