@@ -21,6 +21,7 @@ import org.jdom2.output.XMLOutputter;
 
 import de.sub.goobi.helper.Helper;
 import de.sub.goobi.metadaten.MetadatenHelper;
+import software.amazon.ion.NullValueException;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.Metadata;
@@ -392,7 +393,11 @@ public class MakeDOI {
 
         addValuePairs(doi, physical, logical);
 
-        addPublicationInfo(doi, physical, logical, document);
+        try {
+            addPublicationInfo(doi, physical, logical, document);
+        } catch (NullValueException e) {
+            //no publication info
+        }
 
         return doi;
     }
@@ -881,21 +886,21 @@ public class MakeDOI {
             item.addContent(eltLastPage);
         }
 
-//        org.apache.solr.common.util.Pair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
-//        if (first != null) {
-//            String firstPage = first.second();
-//            Element eltFirstPage = new Element("firstPage", sNS);
-//            eltFirstPage.setText(firstPage);
-//            item.addContent(eltFirstPage);
-//        }
-//
-//        org.apache.solr.common.util.Pair<String, String> last = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_LAST);
-//        if (first != null) {
-//            String lastPage = last.second();
-//            Element eltLastPage = new Element("lastPage", sNS);
-//            eltLastPage.setText(lastPage);
-//            item.addContent(eltLastPage);
-//        }
+        //        org.apache.solr.common.util.Pair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
+        //        if (first != null) {
+        //            String firstPage = first.second();
+        //            Element eltFirstPage = new Element("firstPage", sNS);
+        //            eltFirstPage.setText(firstPage);
+        //            item.addContent(eltFirstPage);
+        //        }
+        //
+        //        org.apache.solr.common.util.Pair<String, String> last = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_LAST);
+        //        if (first != null) {
+        //            String lastPage = last.second();
+        //            Element eltLastPage = new Element("lastPage", sNS);
+        //            eltLastPage.setText(lastPage);
+        //            item.addContent(eltLastPage);
+        //        }
         pubData.addContent(item);
 
         doi.setPubData(pubData);
