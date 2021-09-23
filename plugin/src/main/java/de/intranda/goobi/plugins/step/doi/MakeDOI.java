@@ -865,7 +865,7 @@ public class MakeDOI {
         //pages
         MetadatenHelper metahelper = new MetadatenHelper(prefs, document);
 
-        MutablePair<String, String> first = metahelper.getImageNumber(logical, MetadatenHelper.PAGENUMBER_FIRST);
+        MutablePair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
         if (first != null) {
             String firstPage = first.getRight();
             Element eltFirstPage = new Element("firstPage", sNS);
@@ -873,7 +873,7 @@ public class MakeDOI {
             item.addContent(eltFirstPage);
         }
 
-        MutablePair<String, String> last = metahelper.getImageNumber(logical, MetadatenHelper.PAGENUMBER_LAST);
+        MutablePair<String, String> last = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_LAST);
         if (first != null) {
             String lastPage = last.getRight();
             Element eltLastPage = new Element("lastPage", sNS);
@@ -881,6 +881,21 @@ public class MakeDOI {
             item.addContent(eltLastPage);
         }
 
+//        org.apache.solr.common.util.Pair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
+//        if (first != null) {
+//            String firstPage = first.second();
+//            Element eltFirstPage = new Element("firstPage", sNS);
+//            eltFirstPage.setText(firstPage);
+//            item.addContent(eltFirstPage);
+//        }
+//
+//        org.apache.solr.common.util.Pair<String, String> last = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_LAST);
+//        if (first != null) {
+//            String lastPage = last.second();
+//            Element eltLastPage = new Element("lastPage", sNS);
+//            eltLastPage.setText(lastPage);
+//            item.addContent(eltLastPage);
+//        }
         pubData.addContent(item);
 
         doi.setPubData(pubData);
