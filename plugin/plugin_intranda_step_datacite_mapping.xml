@@ -1,52 +1,105 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Mapping>
-  <!-- Mandatory fields: -->
-  <map>
-    <field>title</field>
-    <metadata>TitleDocMain</metadata>
-    <altMetadata>TitleDocMainShort</altMetadata>
-    <altMetadata>Title</altMetadata>
-    <default>Fragment</default>
-  </map>
+    <!-- Mandatory fields: -->
+    <map>
+        <field>title</field>
+        <metadata>TitleDocMain</metadata>
+        <altMetadata>TitleDocMainShort</altMetadata>
 
-  <map>
-    <field>author</field>
-    <metadata>Author</metadata>
-    <altMetadata>Composer</altMetadata>
-    <altMetadata>IllustratorArtist</altMetadata>
-    <altMetadata>WriterCorporate</altMetadata>
-    <default>unkn</default>
-  </map>
+        <altMetadata>Title</altMetadata>
+        <default>unkn</default>
+    </map>
 
-  <map>
-    <field>publisher</field>
-    <metadata>Publisher</metadata>
-    <altMetadata>PublisherName</altMetadata>
-    <altMetadata>PublisherPerson</altMetadata>
-    <default>unkn</default>
-  </map>
+    <map>
+        <field>author</field>
+        <metadata>Author</metadata>
+        <altMetadata>Composer</altMetadata>
+        <altMetadata>IllustratorArtist</altMetadata>
+        <altMetadata>WriterCorporate</altMetadata>
+        <default>unkn</default>
+    </map>
 
-  <map>
-    <field>publicationYear</field>
-    <metadata>_dateDigitization</metadata>
-    <default>#CurrentYear</default>
-  </map>
+    <map>
+        <field>publisher</field>
+        <metadata>Publisher</metadata>
+        <altMetadata>PublisherName</altMetadata>
+        <altMetadata>PublisherPerson</altMetadata>
+        <default>unkn</default>
+    </map>
 
-  <map>
-    <field>inst</field>
-    <default>intranda</default>
-  </map>
+    <map>
+        <field>publicationYear</field>
+        <metadata>_dateDigitization</metadata>
+        <default>#CurrentYear</default>
+    </map>
+
+    <map>
+        <field>inst</field>
+        <metadata>OwningInstitution</metadata>
+        <default>Universitätsbibliothek Stuttgart</default>
+    </map>
 
 
-  <map>
-    <field>resourceType</field>
-    <default>document</default>
-  </map>
+    <map>
+        <field>resourceType</field>
+        <default>document</default>
+    </map>
 
-  <!-- Optional fields: -->
-  <map>
-    <field>editor</field>
-    <metadata>Editor</metadata>
-  </map>
+    <!-- Optional fields: -->
+
+    <listMap>
+        <field>editor</field>
+        <list>contributors</list>
+        <metadata>Editor</metadata>
+    </listMap>
+
+    <listMap relatedIdentifierType="ISSN" relationType="IsPublishedIn">
+        <field>relatedIdentifier</field>
+        <list>relatedIdentifiers</list>
+        <metadata>anchor_ISSN</metadata>
+    </listMap>
+
+    <listMap descriptionType="SeriesInformation">
+        <field>description</field>
+        <list>descriptions</list>
+        <metadata>anchor_TitleDocMain</metadata>
+    </listMap>
+
+    <listMap descriptionType="SeriesInformation">
+        <field>description</field>
+        <list>descriptions</list>
+        <metadata>CurrentNo</metadata>
+    </listMap>
+
+    <listMap dateType="Created">
+        <field>date</field>
+        <list>dates</list>
+        <metadata>Dating</metadata>
+        <altMetadata>PublicationYear</altMetadata>
+        <altMetadata>anchor_PublicationYear</altMetadata>
+    </listMap>
+
+    <!-- Specific fields for publication info: -->
+
+    <publicationData>
+        <field>ISSN</field>
+        <metadata>anchor_ISSN</metadata>
+    </publicationData>
+
+    <publicationData>
+        <field>title</field>
+        <metadata>anchor_TitleDocMain</metadata>
+    </publicationData>
+
+    <publicationData>
+        <field>publicationYear</field>
+        <metadata>anchor_PublicationYear</metadata>
+    </publicationData>
+
+    <publicationData>
+        <field>volume</field>
+        <metadata>CurrentNo</metadata>
+    </publicationData>
+
 
 </Mapping>

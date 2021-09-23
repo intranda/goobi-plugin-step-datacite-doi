@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.configuration.SubnodeConfiguration;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
@@ -18,6 +19,9 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
+import de.sub.goobi.helper.Helper;
+import de.sub.goobi.metadaten.MetadatenHelper;
+import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.Metadata;
 import ugh.dl.MetadataType;
@@ -41,6 +45,9 @@ public class MakeDOI {
 
     //dictionary of list mappings    
     private HashMap<String, ArrayList<Element>> doiListMappings;
+
+    //dictionary of pub data mappings    
+    private HashMap<String, ArrayList<Element>> doiListPub;
 
     private ArrayList<String> lstMandatory;
 
@@ -273,6 +280,10 @@ public class MakeDOI {
                 rootNew.addContent(eltList);
             }
         }
+
+        if (basicDOI.getPubData() != null) {
+            rootNew.addContent(basicDOI.getPubData());
+        }
     }
 
     /*
@@ -365,7 +376,8 @@ public class MakeDOI {
      * @return
      * @throws MetadataTypeNotAllowedException
      */
-    public BasicDoi getBasicDoi(DocStruct physical, DocStruct logical, DocStruct anchor) throws MetadataTypeNotAllowedException {
+    public BasicDoi getBasicDoi(DocStruct physical, DocStruct logical, DocStruct anchor, DigitalDocument document)
+            throws MetadataTypeNotAllowedException {
 
         this.anchor = anchor;
 
@@ -379,6 +391,9 @@ public class MakeDOI {
         doi.lstContent = getContentLists(physical, logical);
 
         addValuePairs(doi, physical, logical);
+
+        addPublicationInfo(doi, physical, logical, document);
+
         return doi;
     }
 
@@ -500,7 +515,7 @@ public class MakeDOI {
         }
 
         ArrayList<Metadata> lstReturn = new ArrayList<Metadata>();
-         
+
         for (Element eltMap : mapping.get(field)) {
 
             if (eltMap != null) {
@@ -540,8 +555,8 @@ public class MakeDOI {
 
         //otherwise just return default
         if (lstReturn.isEmpty())
-            lstReturn = lstDefault ;
-        
+            lstReturn = lstDefault;
+
         return lstReturn;
     }
 
@@ -553,9 +568,23 @@ public class MakeDOI {
      */
     private List<String> getValues(String field, DocStruct struct, DocStruct logical) {
 
-        HashMap<String, ArrayList<Element>> mapping = doiMappings;
-        if (!mapping.containsKey(field)) {
-            mapping = doiListMappings;
+        //use the vlaue or value list mapping
+        return getValues(field, struct, logical, null);
+    }
+
+    /**
+     * Get the values of metadata for the specified field, in the specified struct. If the value is not found there (eg in the chapter), then look for
+     * it in the "logical" parent.
+     * 
+     * @param logical
+     */
+    private List<String> getValues(String field, DocStruct struct, DocStruct logical, HashMap<String, ArrayList<Element>> mapping) {
+
+        if (mapping == null) {
+            mapping = doiMappings;
+            if (!mapping.containsKey(field)) {
+                mapping = doiListMappings;
+            }
         }
 
         ArrayList<String> lstReturn = new ArrayList<String>();
@@ -611,11 +640,11 @@ public class MakeDOI {
                 }
             }
         }
-        
+
         //otherwise just return default
         if (lstReturn.isEmpty())
-            lstReturn = lstDefault ;
-        
+            lstReturn = lstDefault;
+
         return lstReturn;
     }
 
@@ -754,6 +783,122 @@ public class MakeDOI {
      */
     public void setPrefs(Prefs prefs2) {
         this.prefs = prefs2;
+    }
+
+    /**
+     * Example to look like : <relatedItems> <relatedItem relationType="IsPublishedIn" relatedItemType="Journal">
+     * 
+     * <relatedItemIdentifier relatedItemIdentifierType="ISSN">0370-2693</relatedItemIdentifier> <titles> <title>Physics letters B</title> </titles>
+     * <publicationYear>2018</publicationYear> <volume>776</volume> <firstPage>249</firstPage> <lastPage>264</lastPage>
+     * 
+     * </relatedItem> </relatedItems>
+     * 
+     * 
+     * 
+     * @param doi
+     * @param physical
+     * @param logical
+     * @param document
+     */
+    private void addPublicationInfo(BasicDoi doi, DocStruct physical, DocStruct logical, DigitalDocument document) {
+
+        this.doiListPub = new HashMap<String, ArrayList<Element>>();
+        Element rootNode = mapping.getRootElement();
+
+        for (Element elt : rootNode.getChildren("publicationData")) {
+            ArrayList<Element> lstElts = new ArrayList<Element>();
+            String key = elt.getChildText("field");
+            if (doiListPub.containsKey(key)) {
+                lstElts = doiListPub.get(key);
+            }
+            lstElts.add(elt);
+
+            doiListPub.put(key, lstElts);
+        }
+
+        String relatedItemType = getPublicationType(logical);
+
+        Element pubData = new Element("relatedItems", sNS);
+        Element item = new Element("relatedItem", sNS);
+        item.setAttribute("relationType", "IsPublishedIn");
+        item.setAttribute("relatedItemType", relatedItemType);
+
+        //ISSN
+        Element eltId = new Element("relatedItemIdentifier", sNS);
+        eltId.setAttribute("relatedItemIdentifierType", "ISSN");
+        List<String> issn = getValues("ISSN", physical, logical, doiListPub);
+        if (issn != null && !issn.isEmpty()) {
+            eltId.setText(issn.get(0));
+            item.addContent(eltId);
+        }
+
+        //Title
+        Element eltTitles = new Element("titles", sNS);
+        List<String> titles = getValues("title", physical, logical, doiListPub);
+        Element eltTitle = null;
+        if (titles != null && !titles.isEmpty()) {
+            for (String title : titles) {
+
+                eltTitle = new Element("title", sNS);
+                eltTitle.setText(title);
+                eltTitles.addContent(eltTitle);
+            }
+        }
+        item.addContent(eltTitles);
+
+        //publicationYear
+        Element eltYear = new Element("publicationYear", sNS);
+        List<String> years = getValues("publicationYear", physical, logical, doiListPub);
+        if (years != null && !years.isEmpty()) {
+            eltYear.setText(years.get(0));
+            item.addContent(eltYear);
+        }
+
+        //volume
+        Element eltVol = new Element("volume", sNS);
+        List<String> vols = getValues("volume", physical, logical, doiListPub);
+        if (vols != null && !vols.isEmpty()) {
+            eltVol.setText(vols.get(0));
+            item.addContent(eltVol);
+        }
+
+        //pages
+        MetadatenHelper metahelper = new MetadatenHelper(prefs, document);
+
+        MutablePair<String, String> first = metahelper.getImageNumber(logical, MetadatenHelper.PAGENUMBER_FIRST);
+        if (first != null) {
+            String firstPage = first.getRight();
+            Element eltFirstPage = new Element("firstPage", sNS);
+            eltFirstPage.setText(firstPage);
+            item.addContent(eltFirstPage);
+        }
+
+        MutablePair<String, String> last = metahelper.getImageNumber(logical, MetadatenHelper.PAGENUMBER_LAST);
+        if (first != null) {
+            String lastPage = last.getRight();
+            Element eltLastPage = new Element("lastPage", sNS);
+            eltLastPage.setText(lastPage);
+            item.addContent(eltLastPage);
+        }
+
+        pubData.addContent(item);
+
+        doi.setPubData(pubData);
+    }
+
+    private String getPublicationType(DocStruct logical) {
+
+        try {
+            switch (logical.getType().toString()) {
+                case "MultiVolumeWork":
+                    return "Book";
+
+                default:
+                    return "Journal";
+            }
+        } catch (Exception e) {
+            return "Journal";
+        }
     }
 
 }

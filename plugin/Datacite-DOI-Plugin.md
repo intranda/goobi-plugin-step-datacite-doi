@@ -176,6 +176,28 @@ The mapping configuration file looks something like this:
         <altMetadata>PublicationYear</altMetadata>
         <altMetadata>anchor_PublicationYear</altMetadata>
     </listMap>
+    
+    <!-- Specific fields for publication info: -->
+
+    <publicationData>
+        <field>ISSN</field>
+        <metadata>anchor_ISSN</metadata>
+    </publicationData>
+
+    <publicationData>
+        <field>title</field>
+        <metadata>anchor_TitleDocMain</metadata>
+    </publicationData>
+
+    <publicationData>
+        <field>publicationYear</field>
+        <metadata>anchor_PublicationYear</metadata>
+    </publicationData>
+
+    <publicationData>
+        <field>volume</field>
+        <metadata>CurrentNo</metadata>
+    </publicationData>
 
 </Mapping>
 ```
@@ -196,6 +218,28 @@ In the example above this looks like:
         <date dateType="Created">1847</date>
     </dates>
 ```
+
+The "Specific fields for publication info" are mappings for specific metadata, intended for reading by citation software. An example of such a set of metadata is:
+
+```
+<relatedItems>
+  <relatedItem relationType="IsPublishedIn" relatedItemType="Journal">
+    <relatedItemIdentifier relatedItemIdentifierType="ISSN">0370-2693</relatedItemIdentifier>
+    <titles>
+      <title>Physics letters B</title>
+    </titles>
+    <publicationYear>2018</publicationYear>
+    <volume>776</volume>
+    <firstPage>249</firstPage>
+    <lastPage>264</lastPage>
+  </relatedItem>
+</relatedItems>
+
+```
+
+and the fields "ISSN", "title" etc are filled using the `<publicationData>` mappings.
+The fields `<firstPage>` and `<lastPage>` are filled using data in the Goobi process.
+
 
 ### Integration of the plugin into the workflow
 

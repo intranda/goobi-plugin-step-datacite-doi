@@ -133,13 +133,13 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 String strHandle = getHandle(article);
                 //If not, create a new handle
                 if (strHandle == null) {
-                    strDOI = addDoi(article, strId, prefs, i, logical, anchor);
+                    strDOI = addDoi(article, strId, prefs, i, logical, anchor,  digitalDocument);
                     Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI created: " + strDOI);
                     i++;
                 }
                 //otherwise just update the existing handle
                 else {
-                    handler.updateData(article, strHandle, logical, anchor);
+                    handler.updateData(article, strHandle, logical, anchor,  digitalDocument);
                     Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI updated: " + strHandle);
                 }
             }
@@ -221,7 +221,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * @throws JDOMException
      * @throws UGHException
      */
-    public String addDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex, DocStruct logical, DocStruct anchor)
+    public String addDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws HandleException, IOException, JDOMException, DoiException, UGHException {
 
         //Make a handle
@@ -236,7 +236,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             strPostfix += name + separator;
         }
 
-        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex, logical, anchor);
+        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex, logical, anchor,  document);
         setHandle(docstruct, strHandle);
 
         return strHandle;

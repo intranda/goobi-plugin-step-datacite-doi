@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.jdom2.Element;
 
 /**
  * Most basic necessary info for a DataCite DOI: it must contain at least
@@ -23,6 +24,7 @@ public class BasicDoi {
     public List<DoiListContent> lstContent;
 
     private List<Pair<String, List<String>>> lstValues;
+    private Element pubData;
 
     /**
      * Constructor
@@ -75,5 +77,13 @@ public class BasicDoi {
         List<String> lstNew = new ArrayList<String>();
         lstNew.add(strValue);
         lstValues.add(Pair.of(strName, lstNew));
+    }
+    
+    public void setPubData(Element elt) {
+        this.pubData = elt;
+    }
+    
+    public Element getPubData() {
+        return this.pubData;
     }
 }

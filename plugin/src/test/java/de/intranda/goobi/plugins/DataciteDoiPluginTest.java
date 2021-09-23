@@ -60,6 +60,10 @@ public class DataciteDoiPluginTest {
         String strMeta = "/opt/digiverso/goobi/test/stutt/meta.xml";
         String strRS = "/opt/digiverso/goobi/test/stutt/ruleset-stutt.xml";
         
+//        String strConfig = "/home/joel/git/Stuttgart/test/plugin_intranda_step_datacite_doi.xml";
+//        String strMeta = "/home/joel/git/Stuttgart/test/meta.xml";
+//        String strRS = "/home/joel/git/Stuttgart/test/ruleset-stutt.xml";
+        
         XMLConfiguration xmlConfig = new XMLConfiguration(strConfig); //ConfigPlugins.getPluginConfig("whatever");
         xmlConfig.setExpressionEngine(new XPathExpressionEngine());
         xmlConfig.setReloadingStrategy(new FileChangedReloadingStrategy());
@@ -99,7 +103,7 @@ public class DataciteDoiPluginTest {
             String strId = plugin.getId(article, logical);
 
             //add handle
-            BasicDoi doi = maker.getBasicDoi(article, logical, anchor);
+            BasicDoi doi = maker.getBasicDoi(article, logical, anchor, digitalDocument);
 
             String str = maker.getXMLStructure("new", doi);
 

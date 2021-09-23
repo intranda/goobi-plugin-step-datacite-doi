@@ -14,6 +14,7 @@ import de.intranda.goobi.plugins.step.doi.MakeDOI;
 import de.intranda.goobi.plugins.step.http.HTTPResponse;
 import lombok.extern.log4j.Log4j;
 import net.handle.hdllib.HandleException;
+import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.Prefs;
 import ugh.exceptions.UGHException;
@@ -68,10 +69,10 @@ public class DoiHandler {
      * @throws UGHException
      * 
      */
-    public String makeURLHandleForObject(String strObjectId, String strPostfix, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor)
+    public String makeURLHandleForObject(String strObjectId, String strPostfix, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws JDOMException, IOException, DoiException, UGHException {
 
-        String strNewHandle = registerNewHandle(base + "/" + strPostfix + strObjectId, docstruct, iIndex, logical,anchor);
+        String strNewHandle = registerNewHandle(base + "/" + strPostfix + strObjectId, docstruct, iIndex, logical,anchor,  document);
 
         return strNewHandle;
     }
@@ -89,7 +90,7 @@ public class DoiHandler {
      * @throws JDOMException
      * @throws UGHException
      */
-    public String registerNewHandle(String strNewHandle, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor)
+    public String registerNewHandle(String strNewHandle, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws DoiException, JDOMException, IOException, UGHException {
 
 //        //if the index is incremented, then we are giving more than one article a handle.
@@ -122,7 +123,7 @@ public class DoiHandler {
         //first we must register the metadata:
 
         //create the xml from the original file
-        BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct,logical, anchor);
+        BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct,logical, anchor,  document);
         String strMetadata = makeDOI.getXMLStructure(strNewHandle, basicDOI);
 
         //register the metadata
@@ -174,7 +175,7 @@ public class DoiHandler {
      * Create a DOI (with basic information) for the docstruct, and update the handle with the DOI info.
      * @param anchor 
      */
-    public Boolean updateData(DocStruct docstruct, String handle, DocStruct logical, DocStruct anchor) throws JDOMException, IOException, DoiException {
+    public Boolean updateData(DocStruct docstruct, String handle, DocStruct logical, DocStruct anchor, DigitalDocument document) throws JDOMException, IOException, DoiException {
 
         if (StringUtils.isEmpty(handle)) {
             throw new IllegalArgumentException("URL cannot be empty");
@@ -185,7 +186,7 @@ public class DoiHandler {
         try {
 
             try {
-                BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct, logical, anchor);
+                BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct, logical, anchor,  document);
                 strMetadata = makeDOI.getXMLStructure(handle, basicDOI);
             } catch (Exception e) {
                 throw new DoiException(e);
