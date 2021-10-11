@@ -21,7 +21,7 @@
 		<prefix>go</prefix>
 		<name>goobi</name>
 		<separator>-</separator>
-		<handleMetadata>_urn</handleMetadata>
+		<doiMetadata>DOI</doiMetadata>
 
 		<!-- configuration for DOIs -->
 		<doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>
