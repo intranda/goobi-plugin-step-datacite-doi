@@ -35,7 +35,12 @@ public class PostMetadata {
             request.setContentType("application/xml;charset=UTF-8");
             request.setBody(requestBody);
 
+            log.debug("Posting metadata for doi ");
+            log.debug(requestBody);
+            
             HTTPResponse response = HTTPClient.doHTTPRequest(request);
+            
+            log.debug(response.toString());
             return response;
 
         } catch (Exception e) {

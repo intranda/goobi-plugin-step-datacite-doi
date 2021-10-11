@@ -3,8 +3,10 @@ package de.intranda.goobi.plugins.step.doi;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.apache.commons.configuration.SubnodeConfiguration;
@@ -209,7 +211,15 @@ public class MakeDOI {
         outter.setFormat(Format.getPrettyFormat().setIndent("    "));
         String strOutput = outter.outputString(rootNew);
 
-        return strOutput;
+        //remove duplicate lines:
+        StringBuilder builder = new StringBuilder(); 
+        LinkedHashSet<String> array = new LinkedHashSet<String>(Arrays.asList(strOutput.split("\n")));
+        for (String line: array) {
+            builder.append(line);
+        }
+        String result = builder.toString();
+        
+        return result;
     }
 
     /**
@@ -239,8 +249,8 @@ public class MakeDOI {
      */
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
 
-        //        this.sNS = rootNew.getNamespace();
-
+        //        this.sNS = rootNew.getNamespace();        
+        
         //Add the elts with children:
         Element titles = new Element("titles", sNS);
         rootNew.addContent(titles);
