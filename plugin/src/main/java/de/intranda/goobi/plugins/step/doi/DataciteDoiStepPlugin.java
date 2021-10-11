@@ -166,13 +166,25 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     public void getArticles(ArrayList<DocStruct> lstArticles, DocStruct logical) {
 
         //If no specific types, just add the top doctype:
-        if (typesForDOI == null || typesForDOI.length == 0) {
+        Boolean boTypes = false;
+        if (typesForDOI != null && typesForDOI.length > 0) {
+            for (String strType : typesForDOI) {
+                if (strType != null && !strType.isEmpty() && !strType.isBlank()) {
+                    boTypes = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!boTypes) {
             lstArticles.add(logical);
             return;
         }
 
         //otherwise add all docstructs mentioned in typesForDOI
         for (String strType : typesForDOI) {
+
+            log.debug("Adding type: " + strType);
             if (logical.getType().getName().contentEquals(strType)) {
                 lstArticles.add(logical);
                 break;
@@ -185,6 +197,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 getArticles(lstArticles, child);
             }
         }
+        
     }
 
     /**
