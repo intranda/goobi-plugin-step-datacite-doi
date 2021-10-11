@@ -61,7 +61,7 @@ The configuration is done via the configuration file `plugin_intranda_step_datac
 		<prefix>go</prefix>
 		<name>goobi</name>
 		<separator>-</separator>
-		<handleMetadata>_urn</handleMetadata>
+		<doiMetadata>DOI</doiMetadata>
 
 		<!-- configuration for DOIs -->
 		<doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>
@@ -88,7 +88,7 @@ The configuration allows different configurations for different process template
 | `prefix` |This is the prefix that may be given to the DOI before the name and ID of the document.  |
 |  `name` | This is the name that may be given to the DOI before the ID number of the document.  |
 |  `separator` |  Define here a separator that shall be used between the different parts of the DOI.s |
-|  `handleMetadata` | specifies under which metadata name the handle for the DOI is to be saved in the METS-MODS file. Default is `_urn`.|
+|  `doiMetadata` | specifies under which metadata name the DOI is to be saved in the METS-MODS file. Default is `DOI`.|
 |  `doiMapping` | the path to the mapping file. |
 |  `typeForDOI` | With this parameter DocStruct types can be defined which will be given DOIs. If this is empty or missing, the top DocStruct element only will be given a DOI. If the parameter contains the name of a sub-DocStruct, then these will be given DOIs. Several types of DocStruct may be specified by repeating this parameter, in that case all DocStructs specified will be given DOIs.|
 
@@ -250,10 +250,10 @@ Since this plugin is usually to be executed automatically, the workflow step sho
 
 ### Operation of the plugin
 
-Here we use the term "DOI" to refer to the saved record containing metadata and a hyperlink. The ID number of the DOI we refer to here as a "handle", as it is also registered in the Handle Network.
+Here we use the term "DOI" to refer to the saved record containing metadata and a hyperlink. The ID number of the DOI we refer to here as a "DOI id", and it is also registered in the Handle Network.
 
 The program examines the metadata fields of a METS-MODS file from a Goobi process. If one or more `<typeForDOI>` is specified, then it will go through each DocStruct of these types in the file. If not, then it will take the top DocStruct which is not an anchor. From these it creates the data for a DOI, using the mapping file to translate.
 
-If the DocStruct already has a handle registered (under `<handleMetadata>`), then this handle will be updated with the newly generated DOI data.
+If the DocStruct already has a DOI registered (under `<doiMetadata>`), then this DOI will be updated with the newly generated DOI data.
 
-If the handle is not yet registered, the plugin registers the DOI via the MDS API of DataCite, with handle given by the `<base>` together with any `<prefix>` and `<name>`, and the ID of the document (its CatalogIDDigital) plus an increment, if there are more than one DOIs generated for the given document. The record is given a registered URL defined by the `<url>` followed by the DOI. The generated handle is written into the METS/MODS file under the metadata specified in `<handleMetadata>`. If there is a `<typeForDOI>` of type Article for example, then each Article in the METS/MODS file will be given a DOI, with the handle for the DOI saved in the metadata under `<handleMetadata>` for each Article.
+If the DOI is not yet registered, the plugin registers the DOI via the MDS API of DataCite, with DOI id given by the `<base>` together with any `<prefix>` and `<name>`, and the ID of the document (its CatalogIDDigital) plus an increment, if there are more than one DOIs generated for the given document. The record is given a registered URL defined by the `<url>` followed by the DOI. The generated DOI id is written into the METS/MODS file under the metadata specified in `<doiMetadata>`. If there is a `<typeForDOI>` of type Article for example, then each Article in the METS/MODS file will be given a DOI, with the id for the DOI saved in the metadata under `<doiMetadata>` for each Article.
