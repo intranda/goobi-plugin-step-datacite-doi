@@ -220,7 +220,7 @@ public class MakeDOI {
             if (lastLine != "") {
                 builder.append(System.getProperty("line.separator"));
             }
-            if (line != lastLine) {
+            if (!line.contentEquals(lastLine) ){
                 builder.append(line);
             }
             lastLine = line;
