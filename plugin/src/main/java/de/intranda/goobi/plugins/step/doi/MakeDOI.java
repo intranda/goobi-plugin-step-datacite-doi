@@ -212,13 +212,21 @@ public class MakeDOI {
         String strOutput = outter.outputString(rootNew);
 
         //remove duplicate lines:
-        StringBuilder builder = new StringBuilder(); 
-        LinkedHashSet<String> array = new LinkedHashSet<String>(Arrays.asList(strOutput.split("\n")));
-        for (String line: array) {
-            builder.append(line);
+        String[] lines = strOutput.split("\\r?\\n");
+
+        StringBuilder builder = new StringBuilder();
+        String lastLine = "";
+        for (String line : lines) {
+            if (lastLine != "") {
+                builder.append(System.getProperty("line.separator"));
+            }
+            if (line != lastLine) {
+                builder.append(line);
+            }
+            lastLine = line;
         }
         String result = builder.toString();
-        
+
         return result;
     }
 
@@ -250,7 +258,7 @@ public class MakeDOI {
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
 
         //        this.sNS = rootNew.getNamespace();        
-        
+
         //Add the elts with children:
         Element titles = new Element("titles", sNS);
         rootNew.addContent(titles);
