@@ -20,7 +20,7 @@ import ugh.dl.Prefs;
 import ugh.exceptions.UGHException;
 
 /**
- * Creates requests for the Handle Service, querying handles and creating new handles.
+ * Creates requests for the Doi Service, querying dois and creating new dois.
  */
 @Log4j
 public class DoiHandler {
@@ -57,7 +57,7 @@ public class DoiHandler {
     }
 
     /**
-     * Given an object with specified ID and postfix, make a handle "base/postfix_id" with URL given in getURLForHandle. Returns the new Handle.
+     * Given an object with specified ID and postfix, make a doi "base/postfix_id" with URL given in getURLForHandle. Returns the new doi.
      * 
      * @param iIndex
      * @param anchor 
@@ -78,7 +78,7 @@ public class DoiHandler {
     }
 
     /**
-     * Make a new handle with specified URL. Returns the new handle.
+     * Make a new doi with specified URL. Returns the new handle.
      * 
      * @param strNewHandle
      * @param docstruct
@@ -93,7 +93,7 @@ public class DoiHandler {
     public String registerNewHandle(String strNewHandle, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws DoiException, JDOMException, IOException, UGHException {
 
-//        //if the index is incremented, then we are giving more than one article a handle.
+//        //if the index is incremented, then we are giving more than one article a doi.
 //        //Only the first one may be updated
 //        if (iIndex == 0 && isDoiRegistered(strNewHandle)) {
 //            updateURLHandleForObject(strNewHandle, prefix + strNewHandle, docstruct);
@@ -117,7 +117,7 @@ public class DoiHandler {
             }
         }
 
-        //test handle ok:
+        //test doi ok:
         strNewHandle = strTestHandle;
 
         //first we must register the metadata:
@@ -136,7 +136,7 @@ public class DoiHandler {
     }
 
     /**
-     * Returns true if the handle has already been registered, false otherwise.
+     * Returns true if the doi has already been registered, false otherwise.
      * 
      */
     public boolean isDoiRegistered(String handle) throws DoiException {
@@ -147,14 +147,14 @@ public class DoiHandler {
     }
 
     /**
-     * Create a DOI (with basic information) for the docstruct, and update the corresponding handle with the DOI info.
+     * Create a DOI (with basic information) for the docstruct, and update the corresponding doi with the DOI info.
      */
     public Boolean addDOI(String metadata, String handle) throws JDOMException, IOException, DoiException {
 
         if (StringUtils.isEmpty(handle)) {
             throw new IllegalArgumentException("URL cannot be empty");
         }
-        log.debug("Update Handle: " + handle + ". Generating DOI.");
+        log.debug("Update DOI: " + handle + ". Generating DOI.");
         try {
 
             PostMetadata postData = new PostMetadata(ao);
@@ -164,7 +164,7 @@ public class DoiHandler {
                 return false;
             }
         } catch (DoiException e) {
-            log.error("Tried to update handle " + handle + " but failed", e);
+            log.error("Tried to update DOI " + handle + " but failed", e);
             throw e;
         }
 
@@ -172,7 +172,7 @@ public class DoiHandler {
     }
 
     /**
-     * Create a DOI (with basic information) for the docstruct, and update the handle with the DOI info.
+     * Create a DOI (with basic information) for the docstruct, and update the doi with the DOI info.
      * @param anchor 
      */
     public Boolean updateData(DocStruct docstruct, String handle, DocStruct logical, DocStruct anchor, DigitalDocument document) throws JDOMException, IOException, DoiException {
@@ -180,7 +180,7 @@ public class DoiHandler {
         if (StringUtils.isEmpty(handle)) {
             throw new IllegalArgumentException("URL cannot be empty");
         }
-        log.debug("Update Handle: " + handle + ". Generating DOI.");
+        log.debug("Update DOI: " + handle + ". Generating DOI.");
 
         String strMetadata = "";
         try {
@@ -196,14 +196,14 @@ public class DoiHandler {
             HTTPResponse response = postData.forUpdatingDoi(handle, strMetadata);
 
             if (response.getResponseCode() != HTTPResponse.CREATED) {
-                throw new DoiException("Tried to update handle " + handle + " but failed: " + response.toString());
+                throw new DoiException("Tried to update DOI " + handle + " but failed: " + response.toString());
             }
 
             //now update the url:
             registerURL(handle, prefix + handle);
 
         } catch (DoiException e) {
-            log.error("Tried to update handle " + handle + " but failed", e);
+            log.error("Tried to update DOI " + handle + " but failed", e);
             throw e;
         }
 
@@ -211,7 +211,7 @@ public class DoiHandler {
     }
 
     /**
-     * Give the DOI with specified handle the url.
+     * Give the DOI with specified doi the url.
      * 
      * @param url
      */
@@ -220,13 +220,13 @@ public class DoiHandler {
         if (StringUtils.isEmpty(handle)) {
             throw new IllegalArgumentException("URL cannot be empty");
         }
-        log.debug("register Handle: " + handle);
+        log.debug("register DOI: " + handle);
 
         PostDOI postDoi = new PostDOI(ao);
         HTTPResponse response = postDoi.newURL(handle, url);
 
         if (response.getResponseCode() != HTTPResponse.CREATED) {
-            throw new DoiException("Tried to register handle " + handle + " but failed: " + response.toString());
+            throw new DoiException("Tried to register DOI " + handle + " but failed: " + response.toString());
         }
 
         return true;
