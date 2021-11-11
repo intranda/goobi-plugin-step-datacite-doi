@@ -4,35 +4,21 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
-import org.goobi.beans.Ruleset;
-import org.goobi.production.enums.LogType;
 import org.jdom2.JDOMException;
 import org.junit.Test;
 
-import de.intranda.goobi.plugins.step.datacite.mds.AccessObject;
-import de.intranda.goobi.plugins.step.datacite.mds.doi.PostDOI;
-import de.intranda.goobi.plugins.step.datacite.mds.metadata.GetMetadata;
-import de.intranda.goobi.plugins.step.datacite.mds.metadata.PostMetadata;
 import de.intranda.goobi.plugins.step.doi.BasicDoi;
 import de.intranda.goobi.plugins.step.doi.DataciteDoiStepPlugin;
-import de.intranda.goobi.plugins.step.doi.DoiException;
-import de.intranda.goobi.plugins.step.doi.DoiHandler;
-import de.intranda.goobi.plugins.step.doi.DoiListContent;
 import de.intranda.goobi.plugins.step.doi.MakeDOI;
-import de.intranda.goobi.plugins.step.http.HTTPResponse;
-import de.sub.goobi.helper.Helper;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
-import ugh.dl.Fileformat;
 import ugh.dl.Prefs;
-import ugh.exceptions.MetadataTypeNotAllowedException;
 import ugh.exceptions.PreferencesException;
 import ugh.exceptions.ReadException;
 import ugh.exceptions.UGHException;
@@ -49,7 +35,7 @@ public class DataciteDoiPluginTest {
     }
 
     //Testing:
-    @Test
+    //    @Test
     public void testXml() throws IOException, JDOMException, ConfigurationException, PreferencesException, ReadException, UGHException {
 
         //        String strConfig = "/opt/digiverso/goobi/test/plugin_intranda_step_datacite_doi.xml";
@@ -90,7 +76,7 @@ public class DataciteDoiPluginTest {
             logical = logical.getAllChildren().get(0);
         }
 
-        ArrayList<DocStruct> lstArticles = new ArrayList<DocStruct>();
+        ArrayList<DocStruct> lstArticles = new ArrayList<>();
         DataciteDoiStepPlugin plugin = new DataciteDoiStepPlugin();
         plugin.typesForDOI = myconfig.getStringArray("typeForDOI");
         plugin.getArticles(lstArticles, logical);
