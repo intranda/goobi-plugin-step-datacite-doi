@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.configuration.SubnodeConfiguration;
+import org.apache.commons.lang.StringUtils;
 import org.goobi.beans.Process;
 import org.goobi.beans.Step;
 import org.goobi.production.enums.LogType;
@@ -113,7 +114,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 logical = logical.getAllChildren().get(0);
             }
 
-            ArrayList<DocStruct> lstArticles = new ArrayList<DocStruct>();
+            ArrayList<DocStruct> lstArticles = new ArrayList<>();
             getArticles(lstArticles, logical);
 
             if (lstArticles.isEmpty()) {
@@ -169,13 +170,13 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
         Boolean boTypes = false;
         if (typesForDOI != null && typesForDOI.length > 0) {
             for (String strType : typesForDOI) {
-                if (strType != null && !strType.isEmpty() && !strType.isBlank()) {
+                if (strType != null && StringUtils.isNotBlank(strType)) {
                     boTypes = true;
                     break;
                 }
             }
         }
-        
+
         if (!boTypes) {
             lstArticles.add(logical);
             return;
@@ -197,7 +198,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 getArticles(lstArticles, child);
             }
         }
-        
+
     }
 
     /**
