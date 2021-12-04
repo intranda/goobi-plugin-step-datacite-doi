@@ -120,7 +120,7 @@ public class DoiHandler {
     /**
      * Create a DOI (with basic information) for the docstruct, and update the corresponding doi with the DOI info.
      */
-    public Boolean registerDOI(String metadata, String doi) throws JDOMException, IOException, DoiException {
+    public void registerDOI(String metadata, String doi) throws JDOMException, IOException, DoiException {
         if (StringUtils.isEmpty(doi)) {
             throw new IllegalArgumentException("URL cannot be empty");
         }
@@ -131,14 +131,12 @@ public class DoiHandler {
             HTTPResponse response = postData.forDoi(doi, metadata);
 
             if (response.getResponseCode() != HTTPResponse.CREATED) {
-                return false;
+                throw new DoiException("Error while registring metadata for doi " + doi + ". Response (" + response.getResponseCode() + "): " + response.getBodyAsString());
             }
         } catch (DoiException e) {
-            log.error("Tried to update DOI " + doi + " but failed", e);
+            log.error("Tried to register DOI " + doi + " but failed", e);
             throw e;
         }
-
-        return true;
     }
 
     /**
@@ -163,7 +161,7 @@ public class DoiHandler {
             PostMetadata postData = new PostMetadata(ao);
             HTTPResponse response = postData.forUpdatingDoi(handle, metadataXml);
             if (response.getResponseCode() != HTTPResponse.CREATED) {
-                throw new DoiException("Tried to update DOI " + handle + " but failed: " + response.toString());
+                throw new DoiException("Tried to update DOI " + handle + " but failed. Response (" + response.getResponseCode() + "): " + response.getBodyAsString());
             }
 
             //now update the url:
@@ -187,7 +185,7 @@ public class DoiHandler {
         PostDOI postDoi = new PostDOI(ao);
         HTTPResponse response = postDoi.newURL(handle, url);
         if (response.getResponseCode() != HTTPResponse.CREATED) {
-            throw new DoiException("Tried to register handle: " + handle + " for URL: " + url + ". Registration failed: " + response.toString());
+            throw new DoiException("Tried to register handle: " + handle + " for URL: " + url + ". Registration failed. Response (" + response.getResponseCode() + "): " + response.getBodyAsString());
         }
     }
 

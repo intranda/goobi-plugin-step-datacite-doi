@@ -45,6 +45,14 @@ public final class HTTPResponse {
         return builder.toString();
     }
 
+    public String getBodyAsString() {
+        if (contentType != null && contentType.contains("application/pdf")) {
+            return "byteStream size: " + (body.length > 0 ? body.length / 1024 : "0") + "KB";
+        } else {
+            return (body.length > 0 ? new String(body) : "null");
+        }
+    }
+    
     /**
      * Responce codes
      */
