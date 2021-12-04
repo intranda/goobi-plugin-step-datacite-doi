@@ -78,15 +78,15 @@ public class DataciteDoiPluginTest {
 
         ArrayList<DocStruct> lstArticles = new ArrayList<>();
         DataciteDoiStepPlugin plugin = new DataciteDoiStepPlugin();
-        plugin.typesForDOI = myconfig.getStringArray("typeForDOI");
-        plugin.getArticles(lstArticles, logical);
+        plugin.setTypesForDOI(myconfig.getStringArray("typeForDOI"));
+        plugin.getStructureElementsToRegister(lstArticles, logical);
 
         int i = 0;
 
         for (DocStruct article : lstArticles) {
 
             //get the id of the article, or if it has none, the id of the parent:
-            String strId = plugin.getId(article, logical);
+            String strId = plugin.getDocStructId(article, logical);
 
             //add handle
             BasicDoi doi = maker.getBasicDoi(article, logical, anchor, digitalDocument);

@@ -287,12 +287,12 @@ public class MakeDOI {
             }
         }
 
-        if (basicDOI.lstContent != null) {
-            for (DoiListContent listContent : basicDOI.lstContent) {
+        if (basicDOI.getContentList() != null) {
+            for (DoiListContent listContent : basicDOI.getContentList()) {
 
-                Element eltList = new Element(listContent.strListName, sNS);
+                Element eltList = new Element(listContent.getName(), sNS);
 
-                for (Element elt : listContent.lstEntries) {
+                for (Element elt : listContent.getEntries()) {
                     eltList.addContent(elt);
                 }
 
@@ -401,13 +401,13 @@ public class MakeDOI {
         this.anchor = anchor;
 
         BasicDoi doi = new BasicDoi();
-        doi.TITLES = getValues("title", physical, logical);
+        doi.setTitles(getValues("title", physical, logical));
         //        doi.CREATORS = getValues("author", physical);
-        doi.PUBLISHER = getValues("publisher", physical, logical);
-        doi.PUBLICATIONYEAR = getValues("publicationYear", physical, logical);
-        doi.RESOURCETYPE = getValues("resourceType", physical, logical);
+        doi.setPublishers(getValues("publisher", physical, logical));
+        doi.setPublicationYears(getValues("publicationYear", physical, logical));
+        doi.setResourceTypes(getValues("resourceType", physical, logical));
 
-        doi.lstContent = getContentLists(physical, logical);
+        doi.setContentList(getContentLists(physical, logical));
 
         addValuePairs(doi, physical, logical);
 
@@ -452,7 +452,7 @@ public class MakeDOI {
         for (Metadata mdAuthot : getMetadataValues("author", doc)) {
 
             Element eltAuthor = makeAuthor(mdAuthot);
-            authors.lstEntries.add(eltAuthor);
+            authors.getEntries().add(eltAuthor);
         }
 
         lstContent.add(authors);
@@ -492,7 +492,7 @@ public class MakeDOI {
                     for (Metadata mdEditor : getMetadataValues("editor", doc)) {
 
                         Element eltEditor = makeEditor(mdEditor);
-                        editors.lstEntries.add(eltEditor);
+                        editors.getEntries().add(eltEditor);
                     }
 
                     lstContent.add(editors);
@@ -506,7 +506,7 @@ public class MakeDOI {
                             eltNew.setAttribute(attribute.getName(), attribute.getValue());
                         }
 
-                        list.lstEntries.add(eltNew);
+                        list.getEntries().add(eltNew);
                     }
                     lstContent.add(list);
                     //have gone through all children for this key here already, do not repeat!

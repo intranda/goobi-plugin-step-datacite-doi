@@ -1,12 +1,12 @@
-package de.intranda.goobi.plugins.step.http;
+package de.intranda.goobi.plugins.step.datacite.mds.http;
+
+import lombok.Data;
 
 /**
  * Encapsulates a HTTP response
  */
+@Data
 public final class HTTPResponse {
-    /*********************************************************************************************
-     * VARIABLE DECLARATIONS *
-     *********************************************************************************************/
 
     // The HTTP response code
     private int responseCode;
@@ -17,43 +17,11 @@ public final class HTTPResponse {
     // The response body
     private byte[] body = new byte[0];
 
-    /*********************************************************************************************
-     * CONSTRUCTORS AND PUBLIC INITIALISATION *
-     *********************************************************************************************/
-
     public HTTPResponse() {
     }
 
     public HTTPResponse(int responseCode) {
         this.responseCode = responseCode;
-    }
-
-    /*********************************************************************************************
-     * PUBLIC METHODS *
-     *********************************************************************************************/
-
-    public int getResponseCode() {
-        return responseCode;
-    }
-
-    public void setResponseCode(int responseCode) {
-        this.responseCode = responseCode;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    public byte[] getBody() {
-        return body;
-    }
-
-    public void setBody(byte[] body) {
-        this.body = body;
     }
 
     @Override
@@ -76,10 +44,6 @@ public final class HTTPResponse {
 
         return builder.toString();
     }
-
-    /*********************************************************************************************
-     * PRIVATE METHODS *
-     *********************************************************************************************/
 
     /**
      * Responce codes

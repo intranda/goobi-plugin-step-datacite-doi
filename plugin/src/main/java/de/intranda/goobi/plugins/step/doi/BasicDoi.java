@@ -6,38 +6,50 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jdom2.Element;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Most basic necessary info for a DataCite DOI: it must contain at least
  * 
- * - title - author - publisher - publication date - resource type
+ * - title 
+ * - author 
+ * - publisher 
+ * - publication date 
+ * - resource type
  * 
  * Here Author must be included in the lstContent, which allows for metadata with more detail.
  */
 public class BasicDoi {
 
-    public List<String> lstFields;
-    public List<String> TITLES;
-    public List<String> PUBLISHER;
-    public List<String> PUBLICATIONYEAR;
-    public List<String> RESOURCETYPE;
+	@Getter @Setter
+	private List<String> fields;
+    @Getter @Setter
+    private List<String> titles;
+    @Getter @Setter
+    private List<String> publishers;
+    @Getter @Setter
+    private List<String> publicationYears;
+    @Getter @Setter
+    private List<String> resourceTypes;
 
-    public List<DoiListContent> lstContent;
+    @Getter @Setter
+    private List<DoiListContent> contentList;
 
-    private List<Pair<String, List<String>>> lstValues;
+    private List<Pair<String, List<String>>> valueList;
+    @Getter @Setter
     private Element pubData;
 
     /**
      * Constructor
      */
     public BasicDoi() {
-        lstFields = new ArrayList<String>();
-        lstFields.add("title");
-        lstFields.add("publisher");
-        lstFields.add("publicationYear");
-        lstFields.add("resourceType");
-
-        lstContent = new ArrayList<DoiListContent>();
-
+        fields = new ArrayList<String>();
+        fields.add("title");
+        fields.add("publisher");
+        fields.add("publicationYear");
+        fields.add("resourceType");
+        contentList = new ArrayList<DoiListContent>();
     }
 
     /**
@@ -46,16 +58,14 @@ public class BasicDoi {
      * @return
      */
     public List<Pair<String, List<String>>> getValues() {
-
-        if (lstValues == null) {
-            lstValues = new ArrayList<Pair<String, List<String>>>();
-            lstValues.add(Pair.of("title", TITLES));
-            lstValues.add(Pair.of("publisher", PUBLISHER));
-            lstValues.add(Pair.of("publicationYear", PUBLICATIONYEAR));
-            lstValues.add(Pair.of("resourceType", RESOURCETYPE));
+        if (valueList == null) {
+        	valueList = new ArrayList<Pair<String, List<String>>>();
+        	valueList.add(Pair.of("title", titles));
+        	valueList.add(Pair.of("publisher", publishers));
+        	valueList.add(Pair.of("publicationYear", publicationYears));
+            valueList.add(Pair.of("resourceType", resourceTypes));
         }
-
-        return lstValues;
+        return valueList;
     }
 
     /**
@@ -65,7 +75,6 @@ public class BasicDoi {
      * @param strValue
      */
     public void addValuePair(String strName, String strValue) {
-
         for (Pair<String, List<String>> pair : getValues()) {
             if (pair.getKey().contentEquals(strName)) {
                 pair.getValue().add(strValue);
@@ -76,14 +85,7 @@ public class BasicDoi {
         //otherwise:
         List<String> lstNew = new ArrayList<String>();
         lstNew.add(strValue);
-        lstValues.add(Pair.of(strName, lstNew));
+        valueList.add(Pair.of(strName, lstNew));
     }
     
-    public void setPubData(Element elt) {
-        this.pubData = elt;
-    }
-    
-    public Element getPubData() {
-        return this.pubData;
-    }
 }

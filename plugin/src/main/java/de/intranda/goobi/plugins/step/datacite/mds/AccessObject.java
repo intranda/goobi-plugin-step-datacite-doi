@@ -1,25 +1,23 @@
 package de.intranda.goobi.plugins.step.datacite.mds;
 
+import lombok.Data;
+
 /*
  * Class holding the data for access to the DataCite DOI registration
  */
+@Data
 public class AccessObject {
 
-    //Address for the datacite requests
-    public String SERVICE_ADDRESS = "https://mds.datacite.org/";
-    
-    //User
-    public String USERNAME = "[username]";
-    
-    //password
-    public String PASSWORD = "[password]";
+    private String serviceAddress = "https://mds.datacite.org/";
+    private String username = "[username]";
+    private String password = "[password]";
     
     /*
      * ctor
      */
     public AccessObject(String username, String pw) {
-        this.USERNAME = username;
-        this.PASSWORD = pw;
+        this.username = username;
+        this.password = pw;
     }
 
 }

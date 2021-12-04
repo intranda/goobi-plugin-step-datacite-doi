@@ -50,9 +50,12 @@ import ugh.dl.Fileformat;
 import ugh.dl.Metadata;
 import ugh.dl.MetadataType;
 import ugh.dl.Prefs;
-import ugh.exceptions.MetadataTypeNotAllowedException;
 import ugh.exceptions.UGHException;
 
+/**
+ * @author steffen
+ *
+ */
 @PluginImplementation
 @Log4j2
 public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
@@ -68,12 +71,14 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     private String returnPath;
     @Getter
     @Setter
-    private MetadataType urn;
+    private MetadataType doiMetadataType;
     @Getter
     @Setter
     private SubnodeConfiguration config;
     private DoiHandler handler;
-    public String[] typesForDOI;
+    @Getter
+    @Setter
+    private String[] typesForDOI;
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -87,75 +92,78 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
     }
 
     /**
-     * Carry out the plugin: - get the current digital document - for each physical and logical element of the document, create and register a doi
-     * - write the dois into the MetsMods file for the document
-     * 
+     * Carry out the plugin: 
+     * 	- get the current digital document 
+     * 	- for the defined logical elements of the document, create and register a doi
+     * 	- write the dois into the MetsMods file
      */
     @Override
     public PluginReturnValue run() {
         boolean successfull = true;
-        String strDOI = "";
-
+        
         try {
-            //read the metatdata
+            //read the configuration and metatdata from the METS file
             Process process = step.getProzess();
             Prefs prefs = process.getRegelsatz().getPreferences();
-            String strUrn = config.getString("doiMetadata", "DOI");
+            String doiMetadataTypeName = config.getString("doiMetadata", "DOI");
+            doiMetadataType = prefs.getMetadataTypeByName(doiMetadataTypeName);
             typesForDOI = config.getStringArray("typeForDOI");
-            urn = prefs.getMetadataTypeByName(strUrn);
 
             Fileformat fileformat = process.readMetadataFile();
             DigitalDocument digitalDocument = fileformat.getDigitalDocument();
             DocStruct logical = digitalDocument.getLogicalDocStruct();
-
+            
+            // in case it is an anchor file use the first child as logical top
             DocStruct anchor = null;
             if (logical.getType().isAnchor()) {
                 anchor = logical;
                 logical = logical.getAllChildren().get(0);
             }
 
-            ArrayList<DocStruct> lstArticles = new ArrayList<>();
-            getArticles(lstArticles, logical);
+            // create a list of all the structure elements that shall receive a DOI
+            // if no structure elements are configured then the top structure element is used
+            ArrayList<DocStruct> structElements = new ArrayList<>();
+            getStructureElementsToRegister(structElements, logical);
 
-            if (lstArticles.isEmpty()) {
-                Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "No DOIs created");
+            // if no structure element was found we cannot create DOIs at all
+            if (structElements.isEmpty()) {
+                Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "Error while trying to register DOIs. No structure elements could be found to register.");
+                successfull = false;
             }
+            
+            // do some preparation
             int i = 0;
-
             this.handler = new DoiHandler(config, prefs);
 
-            for (DocStruct article : lstArticles) {
+            // now run through the list of all docstructs to register
+            for (DocStruct struct : structElements) {
+                // Get the id of the structure element, or if it has none, the id of the parent:
+                String strId = getDocStructId(struct, logical);
 
-                //get the id of the article, or if it has none, the id of the parent:
-                String strId = getId(article, logical);
-
-                //add doi
-                //already has a doi?
-                String strHandle = getHandle(article);
-                //If not, create a new doi
-                if (strHandle == null) {
-                    strDOI = addDoi(article, strId, prefs, i, logical, anchor,  digitalDocument);
-                    Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI created: " + strDOI);
+                // Register the DOI, by first checking if there is one already
+                String existingDoi = getExistingDoi(struct);
+                if (existingDoi == null) {
+                	// if there is no DOI yet create it new
+                	String strDOI = registerNewDoi(struct, strId, prefs, i, logical, anchor,  digitalDocument);
+                    Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "A new DOI was created successfully: " + strDOI);
                     i++;
-                }
-                //otherwise just update the existing doi
-                else {
-                    handler.updateData(article, strHandle, logical, anchor,  digitalDocument);
-                    Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "DOI updated: " + strHandle);
+                } else {
+                	//otherwise just update the existing DOI
+                    handler.updateData(struct, existingDoi, logical, anchor,  digitalDocument);
+                    Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "The DOI was updated successfully:: " + existingDoi);
                 }
             }
 
-            //and save the metadata again.
+            //finally save the METS file again
             process.writeMetadataFile(fileformat);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.ERROR, "Error writing DOI: " + e.getMessage());
+            log.error("An error happend during the registration of DOIs", e);
+            Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.ERROR, "An error happend during the registration of DOIs: " + e.getMessage());
             successfull = false;
         }
 
         log.info("DataCite Doi step plugin executed");
-
         if (!successfull) {
             return PluginReturnValue.ERROR;
         }
@@ -163,63 +171,62 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
         return PluginReturnValue.FINISH;
     }
 
-    //Collect all sub structs of the type typeForDOI
-    public void getArticles(ArrayList<DocStruct> lstArticles, DocStruct logical) {
+    /**
+     * run through all children of the logical structure to collect the structure elements that shall get registered
+     * 
+     * @param structElements
+     * @param logical
+     */
+    public void getStructureElementsToRegister(ArrayList<DocStruct> structList, DocStruct struct) {
 
-        //If no specific types, just add the top doctype:
-        Boolean boTypes = false;
+        // check configured types to check if it is empty
+        Boolean typesConfigured = false;
         if (typesForDOI != null && typesForDOI.length > 0) {
             for (String strType : typesForDOI) {
                 if (strType != null && StringUtils.isNotBlank(strType)) {
-                    boTypes = true;
+                	// at least one type is configured and not empty
+                	typesConfigured = true;
                     break;
                 }
             }
         }
 
-        if (!boTypes) {
-            lstArticles.add(logical);
+        // no special types are configured, so take just the top struct and return
+        if (!typesConfigured) {
+        	structList.add(struct);
             return;
         }
 
-        //otherwise add all docstructs mentioned in typesForDOI
+        // special types were configured, so collect them all
         for (String strType : typesForDOI) {
-
-            log.debug("Adding type: " + strType);
-            if (logical.getType().getName().contentEquals(strType)) {
-                lstArticles.add(logical);
+            log.debug("DOIs shall be registered for special type: " + strType);
+            if (struct.getType().getName().contentEquals(strType)) {
+            	structList.add(struct);
                 break;
             }
         }
 
-        //Check children:
-        if (logical.getAllChildren() != null) {
-            for (DocStruct child : logical.getAllChildren()) {
-                getArticles(lstArticles, child);
+        // if current element has children then check these recursively too
+        if (struct.getAllChildren() != null) {
+            for (DocStruct child : struct.getAllChildren()) {
+            	getStructureElementsToRegister(structList, child);
             }
         }
-
     }
 
     /**
-     * If the element already has a doi, return it, otherwise return null.
+     * If the element already has a DOI, return it, otherwise return null.
+     * 
+     * @param docstruct
+     * @return
      */
-    private String getHandle(DocStruct docstruct) {
-        List<? extends Metadata> lstURN = docstruct.getAllMetadataByType(urn);
+    private String getExistingDoi(DocStruct docstruct) {
+        List<? extends Metadata> lstURN = docstruct.getAllMetadataByType(doiMetadataType);
         if (lstURN.size() == 1) {
             return lstURN.get(0).getValue();
         }
         //otherwise
         return null;
-    }
-
-    /**
-     * Add doi (eg "_urn" or "DOI") metadata to the docstruct.
-     */
-    private void setHandle(DocStruct docstruct, String strHandle) throws MetadataTypeNotAllowedException {
-        Metadata md = new Metadata(urn);
-        md.setValue(strHandle);
-        docstruct.addMetadata(md);
     }
 
     /**
@@ -235,10 +242,10 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * @throws JDOMException
      * @throws UGHException
      */
-    public String addDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
+    public String registerNewDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws HandleException, IOException, JDOMException, DoiException, UGHException {
 
-        //Make a doi
+        // prepare the DOI name
         String name = config.getString("name");
         String prefix = config.getString("prefix");
         String separator = config.getString("separator", "-");
@@ -250,11 +257,16 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
             strPostfix += name + separator;
         }
 
-        String strHandle = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex, logical, anchor,  document);
-        setHandle(docstruct, strHandle);
-
-        return strHandle;
-
+        // register the DOI
+        String doi = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex, logical, anchor,  document);
+        
+        // Write DOI metadata into the docstruct.
+        Metadata md = new Metadata(doiMetadataType);
+        md.setValue(doi);
+        docstruct.addMetadata(md);
+        
+        // return the registered DOI
+        return doi;
     }
 
     /**
@@ -262,8 +274,8 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * 
      * @param logical2
      */
-    public String getId(DocStruct logical, DocStruct parent) {
-        List<Metadata> lstMetadata = logical.getAllMetadata();
+    public String getDocStructId(DocStruct struct, DocStruct parent) {
+        List<Metadata> lstMetadata = struct.getAllMetadata();
         if (lstMetadata != null) {
             for (Metadata metadata : lstMetadata) {
                 if (metadata.getType().getName().equals("CatalogIDDigital")) {
@@ -280,7 +292,6 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 }
             }
         }
-
         return null;
     }
 

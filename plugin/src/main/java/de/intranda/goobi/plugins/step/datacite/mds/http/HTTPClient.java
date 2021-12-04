@@ -1,4 +1,4 @@
-package de.intranda.goobi.plugins.step.http;
+package de.intranda.goobi.plugins.step.datacite.mds.http;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -21,7 +21,7 @@ public class HTTPClient {
 		
 		try{	
 			HttpURLConnection conn;
-			URL url = new URL(request.getURL());			
+			URL url = new URL(request.getUrl());			
 
 			// Open connection
 			if (url.getProtocol().equalsIgnoreCase("https")){
