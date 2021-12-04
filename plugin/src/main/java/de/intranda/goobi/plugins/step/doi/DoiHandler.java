@@ -28,7 +28,7 @@ public class DoiHandler {
     private String prefix;
     private String separator;
 
-    private MakeDOI makeDOI;
+    private DoiMetadataMapper doiMetadataMapper;
     private AccessObject ao;
     private String typeForDOI;
 
@@ -50,30 +50,12 @@ public class DoiHandler {
         this.ao = new AccessObject(config.getString("username"), config.getString("password"));
         ao.setServiceAddress(config.getString("serviceAddress", "https://mds.datacite.org/"));
 
-        this.makeDOI = new MakeDOI(config);
-        makeDOI.setPrefs(prefs);
+        this.doiMetadataMapper = new DoiMetadataMapper(config);
+        doiMetadataMapper.setPrefs(prefs);
     }
 
     /**
      * Given an object with specified ID and postfix, make a doi "base/postfix_id" with URL given in getURLForHandle. Returns the new doi.
-     * 
-     * @param iIndex
-     * @param anchor 
-     * @param anchor2 
-     * 
-     * @throws IOException
-     * @throws JDOMException
-     * @throws DoiException
-     * @throws UGHException
-     * 
-     */
-    public String makeURLHandleForObject(String strObjectId, String strPostfix, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
-            throws JDOMException, IOException, DoiException, UGHException {
-        String strNewHandle = registerNewHandle(base + "/" + strPostfix + strObjectId, docstruct, iIndex, logical,anchor,  document);
-        return strNewHandle;
-    }
-
-    /**
      * Make a new doi with specified URL. Returns the new handle.
      * 
      * @param strNewHandle
@@ -86,16 +68,11 @@ public class DoiHandler {
      * @throws JDOMException
      * @throws UGHException
      */
-    public String registerNewHandle(String strNewHandle, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
+    public String createNewDoi(String strObjectId, String strPostfix, DocStruct docstruct, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws DoiException, JDOMException, IOException, UGHException {
 
-//        //if the index is incremented, then we are giving more than one article a doi.
-//        //Only the first one may be updated
-//        if (iIndex == 0 && isDoiRegistered(strNewHandle)) {
-//            updateURLHandleForObject(strNewHandle, prefix + strNewHandle, docstruct);
-//            return strNewHandle;
-//        }
-
+    	String strNewHandle = base + "/" + strPostfix + strObjectId;
+    	
         //create a unique suffix
         int iCount = iIndex;
         String strTestHandle = strNewHandle + separator + iCount;
@@ -119,11 +96,11 @@ public class DoiHandler {
         //first we must register the metadata:
 
         //create the xml from the original file
-        BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct,logical, anchor,  document);
-        String strMetadata = makeDOI.getXMLStructure(strNewHandle, basicDOI);
+        BasicDoi basicDOI = doiMetadataMapper.getBasicDoi(docstruct,logical, anchor,  document);
+        String strMetadata = doiMetadataMapper.getXMLStructure(strNewHandle, basicDOI);
 
         //register the metadata
-        addDOI(strMetadata, strNewHandle);
+        registerDOI(strMetadata, strNewHandle);
 
         //Then register the url 
         registerURL(strNewHandle, prefix + strNewHandle);
@@ -143,7 +120,7 @@ public class DoiHandler {
     /**
      * Create a DOI (with basic information) for the docstruct, and update the corresponding doi with the DOI info.
      */
-    public Boolean addDOI(String metadata, String doi) throws JDOMException, IOException, DoiException {
+    public Boolean registerDOI(String metadata, String doi) throws JDOMException, IOException, DoiException {
         if (StringUtils.isEmpty(doi)) {
             throw new IllegalArgumentException("URL cannot be empty");
         }
@@ -168,7 +145,7 @@ public class DoiHandler {
      * Update an existing DOI (with basic information) for the docstruct
      * @param anchor 
      */
-    public void updateData(DocStruct docstruct, String handle, DocStruct logical, DocStruct anchor, DigitalDocument document) throws JDOMException, IOException, DoiException {
+    public void updateDoi(DocStruct docstruct, String handle, DocStruct logical, DocStruct anchor, DigitalDocument document) throws JDOMException, IOException, DoiException {
         if (StringUtils.isEmpty(handle)) {
             throw new IllegalArgumentException("The DOI handle cannot be empty");
         }
@@ -177,8 +154,8 @@ public class DoiHandler {
         try {
         	String metadataXml = "";
             try {
-                BasicDoi basicDOI = makeDOI.getBasicDoi(docstruct, logical, anchor,  document);
-                metadataXml = makeDOI.getXMLStructure(handle, basicDOI);
+                BasicDoi basicDOI = doiMetadataMapper.getBasicDoi(docstruct, logical, anchor,  document);
+                metadataXml = doiMetadataMapper.getXMLStructure(handle, basicDOI);
             } catch (Exception e) {
                 throw new DoiException(e);
             }
@@ -198,19 +175,19 @@ public class DoiHandler {
     }
 
     /**
-     * Give the DOI with specified doi the url.
+     * Give the DOI with specified hanlde the url.
      * 
      * @param url
      */
-    public void registerURL(String handle, String url) throws DoiException {
+    private void registerURL(String handle, String url) throws DoiException {
         if (StringUtils.isEmpty(url)) {
             throw new IllegalArgumentException("URL cannot be empty");
         }
-        log.debug("Try to register DOI: " + handle + " for URL: " + url);
+        log.debug("Try to register handle: " + handle + " for URL: " + url);
         PostDOI postDoi = new PostDOI(ao);
         HTTPResponse response = postDoi.newURL(handle, url);
         if (response.getResponseCode() != HTTPResponse.CREATED) {
-            throw new DoiException("Tried to register DOI: " + handle + " for URL: " + url + ". Registration failed: " + response.toString());
+            throw new DoiException("Tried to register handle: " + handle + " for URL: " + url + ". Registration failed: " + response.toString());
         }
     }
 

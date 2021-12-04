@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import de.intranda.goobi.plugins.step.doi.BasicDoi;
 import de.intranda.goobi.plugins.step.doi.DataciteDoiStepPlugin;
-import de.intranda.goobi.plugins.step.doi.MakeDOI;
+import de.intranda.goobi.plugins.step.doi.DoiMetadataMapper;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
 import ugh.dl.Prefs;
@@ -56,7 +56,7 @@ public class DataciteDoiPluginTest {
 
         SubnodeConfiguration myconfig = null;
         myconfig = xmlConfig.configurationAt("/config");
-        MakeDOI maker = new MakeDOI(myconfig);
+        DoiMetadataMapper maker = new DoiMetadataMapper(myconfig);
 
         String[] typesForDOI = myconfig.getStringArray("typeForDOI");
 

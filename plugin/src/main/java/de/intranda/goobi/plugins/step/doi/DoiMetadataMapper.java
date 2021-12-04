@@ -3,10 +3,8 @@ package de.intranda.goobi.plugins.step.doi;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.apache.commons.configuration.SubnodeConfiguration;
@@ -21,8 +19,8 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import de.sub.goobi.helper.Helper;
 import de.sub.goobi.metadaten.MetadatenHelper;
+import lombok.Setter;
 import software.amazon.ion.NullValueException;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
@@ -34,14 +32,12 @@ import ugh.exceptions.MetadataTypeNotAllowedException;
 
 /**
  * Class for reading the metadata necessary for a DOI out of an XML document (eg a MetsMods file).
- * 
  */
-public class MakeDOI {
+public class DoiMetadataMapper {
 
-    /**
-     * The mapping document: this shows which metadata from the MetsMods file should be recorded in which field of the DOI
-     */
-    private Document mapping;
+    // The mapping configuration to control which metadata from the MetsMods file 
+	// should be used in which field of the DOI
+    private Document mappingConfiguration;
 
     //dictionary of mappings
     private HashMap<String, ArrayList<Element>> doiMappings;
@@ -55,26 +51,26 @@ public class MakeDOI {
     private ArrayList<String> lstMandatory;
 
     private Namespace sNS;
-
+    @Setter
     private Prefs prefs;
-
     private DocStruct anchor;
 
     /**
-     * ctor: takes the mapping file as param.
+     * Constructor which takes the mapping file as parameter
      * 
      * @throws IOException
      * @throws JDOMException
      */
-    public MakeDOI(SubnodeConfiguration config) throws JDOMException, IOException {
-
+    public DoiMetadataMapper(SubnodeConfiguration config) throws JDOMException, IOException {
+    	// read configuration file
         String mapFile = config.getString("doiMapping");
         SAXBuilder builder = new SAXBuilder();
         File xmlFile = new File(mapFile);
-        this.mapping = (Document) builder.build(xmlFile);
+        this.mappingConfiguration = (Document) builder.build(xmlFile);
         this.doiMappings = new HashMap<String, ArrayList<Element>>();
-        Element rootNode = mapping.getRootElement();
+        Element rootNode = mappingConfiguration.getRootElement();
 
+        // run through mapping configuration file to find out what shall be mapped how
         for (Element elt : rootNode.getChildren("map")) {
             ArrayList<Element> lstElts = new ArrayList<Element>();
             String key = elt.getChildText("field");
@@ -82,10 +78,10 @@ public class MakeDOI {
                 lstElts = doiMappings.get(key);
             }
             lstElts.add(elt);
-
             doiMappings.put(key, lstElts);
         }
 
+        // run through mapping configuration file to find out which lists shall be mapped 
         this.doiListMappings = new HashMap<String, ArrayList<Element>>();
         for (Element elt : rootNode.getChildren("listMap")) {
             ArrayList<Element> lstElts = new ArrayList<Element>();
@@ -93,15 +89,14 @@ public class MakeDOI {
             if (doiListMappings.containsKey(key)) {
                 lstElts = doiListMappings.get(key);
             }
-
             lstElts.add(elt);
-
             doiListMappings.put(key, lstElts);
         }
 
         //set the namespace for xml
         this.sNS = Namespace.getNamespace("http://datacite.org/schema/kernel-4");
 
+        // create a list of mandatory fields for DOI
         lstMandatory = new ArrayList<String>();
         lstMandatory.add("title");
         lstMandatory.add("author");
@@ -109,84 +104,83 @@ public class MakeDOI {
         lstMandatory.add("publicationYear");
         lstMandatory.add("inst");
         lstMandatory.add("resourceType");
-
     }
 
     /**
-     * Given the root elt of the xml file which we are examining, find the text of the entry correspoinding to the DOI field specified
+     * Given the root element of the xml file which we are examining, 
+     * find the text of the entry correspoinding to the DOI field specified
      * 
      * @param field
      * @param root
      * @return
      */
-    public List<String> getValues(String field, Element root) {
+//    public List<String> getValues(String field, Element root) {
+//        ArrayList<String> lstDefault = new ArrayList<String>();
+//        for (Element eltMap : doiMappings.get(field)) {
+//
+//            if (eltMap == null) {
+//                return null;
+//            }
+//
+//            //set up the default value:
+//            String strDefault = eltMap.getChildText("default");
+//
+//            if (!strDefault.isEmpty()) {
+//                lstDefault.add(strDefault);
+//            }
+//
+//            //try to find the local value:
+//            String metadata = eltMap.getChildText("metadata");
+//
+//            //no local value set? then return default:
+//            if (metadata.isEmpty()) {
+//                continue;
+//            }
+//
+//            //otherwise
+//            List<String> lstLocalValues = getValueRecursive(root, metadata);
+//            if (!lstLocalValues.isEmpty()) {
+//                lstDefault.addAll(lstLocalValues);
+//                continue;
+//            }
+//
+//            //could not find first choice? then try alternatives
+//            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+//                lstLocalValues = getValueRecursive(root, eltAlt.getText());
+//                if (!lstLocalValues.isEmpty()) {
+//                    lstDefault.addAll(lstLocalValues);
+//                    continue;
+//                }
+//            }
+//        }
+//
+//        //otherwise just return default
+//        return lstDefault;
+//    }
 
-        ArrayList<String> lstDefault = new ArrayList<String>();
-
-        for (Element eltMap : doiMappings.get(field)) {
-
-            if (eltMap == null) {
-                return null;
-            }
-
-            //set up the default value:
-            String strDefault = eltMap.getChildText("default");
-
-            if (!strDefault.isEmpty()) {
-                lstDefault.add(strDefault);
-            }
-
-            //try to find the local value:
-            String metadata = eltMap.getChildText("metadata");
-
-            //no local value set? then return default:
-            if (metadata.isEmpty()) {
-                continue;
-            }
-
-            //otherwise
-            List<String> lstLocalValues = getValueRecursive(root, metadata);
-            if (!lstLocalValues.isEmpty()) {
-                lstDefault.addAll(lstLocalValues);
-                continue;
-            }
-
-            //could not find first choice? then try alternatives
-            for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-                lstLocalValues = getValueRecursive(root, eltAlt.getText());
-                if (!lstLocalValues.isEmpty()) {
-                    lstDefault.addAll(lstLocalValues);
-                    continue;
-                }
-            }
-        }
-
-        //otherwise just return default
-        return lstDefault;
-    }
-
-    /**
-     * Find all child elements with the specified name, and return a list of all their values. Note this will STOP at the first level at which it
-     * finds a hit: if there are "title" elements at level 2 it will return all of them, and will NOT continue if look for "title" elts at lower
-     * levels.
-     * 
-     * @param root
-     * @param metadata
-     * @return
-     */
-    private List<String> getValueRecursive(Element root, String metadata) {
-        ArrayList<String> lstValues = new ArrayList<String>();
-        //if we find the correct named element, do NOT include its children in the search:
-        if (root.getName() == metadata) {
-            lstValues.add(root.getText());
-            return lstValues;
-        }
-        //recursive:
-        for (Element eltChild : root.getChildren()) {
-            lstValues.addAll(getValueRecursive(eltChild, metadata));
-        }
-        return lstValues;
-    }
+//    /**
+//     * Find all child elements with the specified name, and return a list of all their values. 
+//     * Note this will STOP at the first level at which it finds a hit: if there are "title" elements 
+//     * at level 2 it will return all of them, and will NOT continue if look for "title" elts at lower
+//     * levels.
+//     * 
+//     * @param root
+//     * @param metadata
+//     * @return
+//     */
+//    private List<String> getValueRecursive(Element root, String metadata) {
+//        ArrayList<String> lstValues = new ArrayList<String>();
+//        //if we find the correct named element, do NOT include its children in the search:
+//        if (root.getName() == metadata) {
+//            lstValues.add(root.getText());
+//            return lstValues;
+//        }
+//        //recursive:
+//        for (Element eltChild : root.getChildren()) {
+//            lstValues.addAll(getValueRecursive(eltChild, metadata));
+//        }
+//        return lstValues;
+//    }
 
     /**
      * Get the xml in strXmlFilePath, create a DOI file, and save it at strSave.
@@ -197,16 +191,22 @@ public class MakeDOI {
      * @throws IOException
      */
     public String getXMLStructure(String strNewHandle, BasicDoi basicDOI) throws IOException {
-
-        Document docEAD = new Document();
+        Document doc = new Document();
         Element rootNew = new Element("resource", sNS);
-        docEAD.setRootElement(rootNew);
-        makeHeader(rootNew, strNewHandle);
-
-        //addDOI
+        doc.setRootElement(rootNew);
+        
+        // add header information into XML
+        Namespace xsiNS = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        rootNew.setAttribute("schemaLocation", "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd", xsiNS);
+        Element ident = new Element("identifier", sNS);
+        ident.setAttribute("identifierType", "DOI");
+        ident.addContent(strNewHandle);
+        rootNew.addContent(ident);        
+        
+        //add basic DOI information into XML
         addDoi(rootNew, basicDOI);
 
-        //now save:
+        // convert xml into string
         XMLOutputter outter = new XMLOutputter();
         outter.setFormat(Format.getPrettyFormat().setIndent("    "));
         String strOutput = outter.outputString(rootNew);
@@ -225,28 +225,7 @@ public class MakeDOI {
             }
             lastLine = line;
         }
-        String result = builder.toString();
-
-        return result;
-    }
-
-    /**
-     * set the resource attribute, and the identifier and creators nodes
-     * 
-     * @param root The new xml file to create
-     * @param strDOI
-     * @param eltOriginal the original xml file to get the content from.
-     */
-    private void makeHeader(Element root, String strDOI) {
-        Namespace xsiNS = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-        root.setAttribute("schemaLocation", "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.2/metadata.xsd", xsiNS);
-
-        //DOI
-        Element ident = new Element("identifier", sNS);
-        ident.setAttribute("identifierType", "DOI");
-        ident.addContent(strDOI);
-        root.addContent(ident);
-
+        return builder.toString();
     }
 
     /**
@@ -256,9 +235,6 @@ public class MakeDOI {
      * @param basicDOI
      */
     private void addDoi(Element rootNew, BasicDoi basicDOI) {
-
-        //        this.sNS = rootNew.getNamespace();        
-
         //Add the elts with children:
         Element titles = new Element("titles", sNS);
         rootNew.addContent(titles);
@@ -270,32 +246,25 @@ public class MakeDOI {
 
             for (String strValue : lstValues) {
                 Element elt = new Element(strName, sNS);
-
                 elt.addContent(strValue);
 
                 if (strName.contentEquals("title")) {
                     titles.addContent(elt);
-
                 } else if (strName.contentEquals("resourceType")) {
                     elt.setAttribute("resourceTypeGeneral", "Text");
                     rootNew.addContent(elt);
-
                 } else {
                     rootNew.addContent(elt);
                 }
-                //                }
             }
         }
 
         if (basicDOI.getContentList() != null) {
             for (DoiListContent listContent : basicDOI.getContentList()) {
-
                 Element eltList = new Element(listContent.getName(), sNS);
-
                 for (Element elt : listContent.getEntries()) {
                     eltList.addContent(elt);
                 }
-
                 rootNew.addContent(eltList);
             }
         }
@@ -305,11 +274,10 @@ public class MakeDOI {
         }
     }
 
-    /*
+    /**
      * Specific structure for an Editor
      */
     private Element makeEditor(Metadata mdPerson) {
-
         Person editor = (Person) mdPerson;
         Element eltEditor = new Element("contributor", sNS);
         eltEditor.setAttribute("contributorType", "Editor");
@@ -319,37 +287,13 @@ public class MakeDOI {
         eltEditor.addContent(eltName);
 
         addName(editor, eltEditor);
-
         return eltEditor;
     }
 
-    /*
-     * Specific structure for an Journal
-     */
-    private Element makeJournal(Metadata md) {
-
-        Element eltJournal = new Element("relatedItem", sNS);
-        eltJournal.setAttribute("relationType", "IsPublishedIn");
-        eltJournal.setAttribute("relatedItemType", "Journal");
-
-        //        Element eltTitles = new Element("titles", sNS);
-        //        Element eltTitle = new Element("title", sNS);
-        //        eltTitle.addContent(newContent)
-        //        eltJournal.setAttribute("relationType", "IsPublishedIn");
-        //        
-        //        eltName.addContent(editor.getDisplayname());
-        //        eltEditor.addContent(eltName);
-        //
-        //        addName(editor, eltEditor);
-
-        return eltJournal;
-    }
-
-    /*
+    /**
      * Specific structure for an Author
      */
     private Element makeAuthor(Metadata mdPerson) {
-
         Person author = (Person) mdPerson;
         Element eltAuthor = new Element("creator", sNS);
         Element eltName = new Element("creatorName", sNS);
@@ -362,15 +306,13 @@ public class MakeDOI {
         eltAuthor.addContent(eltName);
 
         addName(author, eltAuthor);
-
         return eltAuthor;
     }
 
-    /*
-     * Add the first and last name of a Person, if any
+    /**
+     * Add the first and last name of a Person (if any) into the xml
      */
     private void addName(Person editor, Element eltEditor) {
-
         String strFirst = editor.getFirstname();
         String strLast = editor.getLastname();
 
@@ -402,15 +344,28 @@ public class MakeDOI {
 
         BasicDoi doi = new BasicDoi();
         doi.setTitles(getValues("title", physical, logical));
-        //        doi.CREATORS = getValues("author", physical);
         doi.setPublishers(getValues("publisher", physical, logical));
         doi.setPublicationYears(getValues("publicationYear", physical, logical));
         doi.setResourceTypes(getValues("resourceType", physical, logical));
 
+        // set content
         doi.setContentList(getContentLists(physical, logical));
+        
+        // add values as Pairs
+        for (String key : doiMappings.keySet()) {
+            if (lstMandatory.contains(key)) {
+                continue;
+            }
+            List<String> values = getValues(key, physical, logical);
+            if (values == null || values.isEmpty()) {
+                continue;
+            }
 
-        addValuePairs(doi, physical, logical);
-
+            for (String value : values) {
+                doi.addValuePair(key, value);
+            }
+        }
+        
         try {
             addPublicationInfo(doi, physical, logical, document);
         } catch (NullValueException e) {
@@ -420,41 +375,26 @@ public class MakeDOI {
         return doi;
     }
 
-    private void addValuePairs(BasicDoi doi, DocStruct physical, DocStruct logical) {
-        for (String key : doiMappings.keySet()) {
-
-            if (lstMandatory.contains(key)) {
-                continue;
-            }
-            //            if (key.contentEquals("editor")) {
-            //                continue;
-            //            }
-
-            List<String> values = getValues(key, physical, logical);
-
-            if (values == null || values.isEmpty()) {
-                continue;
-            }
-
-            for (String value : values) {
-                doi.addValuePair(key, value);
-            }
-        }
-    }
-
+    /**
+     * get a list of all needed content information
+     * 
+     * @param doc
+     * @param logical
+     * @return
+     * @throws MetadataTypeNotAllowedException
+     */
     private List<DoiListContent> getContentLists(DocStruct doc, DocStruct logical) throws MetadataTypeNotAllowedException {
-
-        List<DoiListContent> lstContent = new ArrayList<DoiListContent>();
-
-        //go through the maetadata map
-        //first (compulsory) authors:
+    	// collect a list of content information
+    	List<DoiListContent> lstContent = new ArrayList<DoiListContent>();
+        
+    	//go through the metadata map
+        
+    	//first (compulsory) authors:
         DoiListContent authors = new DoiListContent("creators");
         for (Metadata mdAuthot : getMetadataValues("author", doc)) {
-
             Element eltAuthor = makeAuthor(mdAuthot);
             authors.getEntries().add(eltAuthor);
         }
-
         lstContent.add(authors);
 
         //then others:
@@ -464,42 +404,17 @@ public class MakeDOI {
                 continue;
             }
 
-            //            if (key.contentEquals("editor")) {
-            //                DoiListContent editors = new DoiListContent("contributors");
-            //                for (Metadata mdEditor : getMetadataValues("editor", doc)) {
-            //
-            //                    Element eltEditor = makeEditor(mdEditor);
-            //                    editors.lstEntries.add(eltEditor);
-            //                }
-            //
-            //                lstContent.add(editors);
-            //            }
-            //            else if (key.contentEquals("journal")) {
-            //                DoiListContent journal = new DoiListContent("relatedItems");
-            //                for (Metadata mdJournal : getMetadataValues("journal", doc)) {
-            //
-            //                    Element eltJournal = makeJournal(mdJournal);
-            //                    journal.lstEntries.add(eltJournal);
-            //                }
-            //
-            //                lstContent.add(journal);
-            //            } 
-            //            else {
             for (Element elt : doiListMappings.get(key)) {
-
                 if (key.contentEquals("editor")) {
                     DoiListContent editors = new DoiListContent("contributors");
                     for (Metadata mdEditor : getMetadataValues("editor", doc)) {
-
                         Element eltEditor = makeEditor(mdEditor);
                         editors.getEntries().add(eltEditor);
                     }
-
                     lstContent.add(editors);
                 } else {
                     DoiListContent list = new DoiListContent(elt.getChildText("list"));
                     for (String strValue : getValues(key, doc, logical)) {
-
                         Element eltNew = new Element(key, sNS);
                         eltNew.addContent(strValue);
                         for (Attribute attribute : elt.getAttributes()) {
@@ -513,7 +428,6 @@ public class MakeDOI {
                     break;
                 }
             }
-            //            }
         }
 
         if (lstContent.isEmpty()) {
@@ -590,7 +504,6 @@ public class MakeDOI {
      * @param logical
      */
     private List<String> getValues(String field, DocStruct struct, DocStruct logical) {
-
         //use the vlaue or value list mapping
         return getValues(field, struct, logical, null);
     }
@@ -685,7 +598,6 @@ public class MakeDOI {
      * Get all metadata of type "name" in the specified struct.
      */
     private ArrayList<Metadata> getMetadataFromMets(DocStruct struct, String name) {
-
         if (fieldIsPerson(name)) {
             return getMetadataPersonFromMets(struct, name);
         }
@@ -708,7 +620,6 @@ public class MakeDOI {
      * Get all metadata of type "name" in the specified struct.
      */
     private ArrayList<String> getStringMetadataFromMets(DocStruct struct, String name) {
-
         ArrayList<String> lstValues = new ArrayList<String>();
 
         if (name == null) {
@@ -739,13 +650,12 @@ public class MakeDOI {
     }
 
     /**
-     * Check whther the field is a person. Uses the current ruleset.
+     * Check whether the field is a person. 
      * 
      * @param name
      * @return
      */
     private boolean fieldIsPerson(String name) {
-
         if (name == null) {
             return false;
         }
@@ -758,7 +668,6 @@ public class MakeDOI {
      * Get all persons of type "name" in the specified struct.
      */
     private ArrayList<String> getPersonFromMets(DocStruct struct, String name) {
-
         ArrayList<String> lstValues = new ArrayList<String>();
 
         //no values?
@@ -785,7 +694,6 @@ public class MakeDOI {
      * Get all persons of type "name" in the specified struct.
      */
     private ArrayList<Metadata> getMetadataPersonFromMets(DocStruct struct, String name) {
-
         ArrayList<Metadata> lstValues = new ArrayList<Metadata>();
 
         //no values?
@@ -799,13 +707,6 @@ public class MakeDOI {
             }
         }
         return lstValues;
-    }
-
-    /*
-     * Setter
-     */
-    public void setPrefs(Prefs prefs2) {
-        this.prefs = prefs2;
     }
 
     /**
@@ -824,9 +725,8 @@ public class MakeDOI {
      * @param document
      */
     private void addPublicationInfo(BasicDoi doi, DocStruct physical, DocStruct logical, DigitalDocument document) {
-
         this.doiListPub = new HashMap<String, ArrayList<Element>>();
-        Element rootNode = mapping.getRootElement();
+        Element rootNode = mappingConfiguration.getRootElement();
 
         for (Element elt : rootNode.getChildren("publicationData")) {
             ArrayList<Element> lstElts = new ArrayList<Element>();
@@ -887,7 +787,6 @@ public class MakeDOI {
 
         //pages
         MetadatenHelper metahelper = new MetadatenHelper(prefs, document);
-
         MutablePair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
         if (first != null) {
             String firstPage = first.getRight();
@@ -904,28 +803,17 @@ public class MakeDOI {
             item.addContent(eltLastPage);
         }
 
-        //        org.apache.solr.common.util.Pair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
-        //        if (first != null) {
-        //            String firstPage = first.second();
-        //            Element eltFirstPage = new Element("firstPage", sNS);
-        //            eltFirstPage.setText(firstPage);
-        //            item.addContent(eltFirstPage);
-        //        }
-        //
-        //        org.apache.solr.common.util.Pair<String, String> last = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_LAST);
-        //        if (first != null) {
-        //            String lastPage = last.second();
-        //            Element eltLastPage = new Element("lastPage", sNS);
-        //            eltLastPage.setText(lastPage);
-        //            item.addContent(eltLastPage);
-        //        }
         pubData.addContent(item);
-
         doi.setPubData(pubData);
     }
 
+    /**
+     * Return the type of the structure as string
+     * 
+     * @param logical
+     * @return
+     */
     private String getPublicationType(DocStruct logical) {
-
         try {
             switch (logical.getType().toString()) {
                 case "MultiVolumeWork":

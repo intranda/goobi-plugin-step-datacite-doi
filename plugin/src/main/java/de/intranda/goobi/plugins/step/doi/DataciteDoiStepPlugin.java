@@ -144,12 +144,12 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
                 String existingDoi = getExistingDoi(struct);
                 if (existingDoi == null) {
                 	// if there is no DOI yet create it new
-                	String strDOI = registerNewDoi(struct, strId, prefs, i, logical, anchor,  digitalDocument);
+                	String strDOI = createNewDoi(struct, strId, prefs, i, logical, anchor,  digitalDocument);
                     Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "A new DOI was created successfully: " + strDOI);
                     i++;
                 } else {
                 	//otherwise just update the existing DOI
-                    handler.updateData(struct, existingDoi, logical, anchor,  digitalDocument);
+                    handler.updateDoi(struct, existingDoi, logical, anchor,  digitalDocument);
                     Helper.addMessageToProcessLog(getStep().getProcessId(), LogType.INFO, "The DOI was updated successfully:: " + existingDoi);
                 }
             }
@@ -242,7 +242,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
      * @throws JDOMException
      * @throws UGHException
      */
-    public String registerNewDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
+    private String createNewDoi(DocStruct docstruct, String strId, Prefs prefs, int iIndex, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws HandleException, IOException, JDOMException, DoiException, UGHException {
 
         // prepare the DOI name
@@ -258,7 +258,7 @@ public class DataciteDoiStepPlugin implements IStepPluginVersion2 {
         }
 
         // register the DOI
-        String doi = handler.makeURLHandleForObject(strId, strPostfix, docstruct, iIndex, logical, anchor,  document);
+        String doi = handler.createNewDoi(strId, strPostfix, docstruct, iIndex, logical, anchor,  document);
         
         // Write DOI metadata into the docstruct.
         Metadata md = new Metadata(doiMetadataType);
