@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -780,14 +782,37 @@ public class DoiMetadataMapper {
         }
         item.addContent(eltTitles);
 
-        //publicationYear
-        Element eltYear = new Element("publicationYear", sNS);
-        List<String> years = getValues("publicationYear", physical, logical, doiListPub);
-        if (years != null && !years.isEmpty()) {
-            eltYear.setText(years.get(0));
-            item.addContent(eltYear);
+        //publicationYear, but make sure it works
+        String yearToUse = null;
+        Pattern pattern = Pattern.compile("[\\d]{4}");
+	    List<String> years = getValues("publicationYear", physical, logical, doiListPub);
+	    for (String y : years) {
+	    	Matcher matcher = pattern.matcher(y);
+	        if(matcher.matches()) {
+	        	yearToUse = y;
+	        	break;
+	        } 
+	    }
+	    // if it does not work try to cut it to 4 characters
+	    if (yearToUse == null) {
+	    	for (String y : years) {
+	    		if (y.length()>4) {
+	        		String tempText = y.substring(0,4);
+	        		Matcher matcher = pattern.matcher(tempText);
+	                if (matcher.matches()) {
+	                	yearToUse = tempText;
+	                	break;
+	                };
+	        	}	    		
+		    }
         }
-
+	    // now use the year only if it is not null
+	    if (yearToUse != null) {
+	        Element eltYear = new Element("publicationYear", sNS);
+            eltYear.setText(yearToUse);
+            item.addContent(eltYear);
+	    }
+	        
         //volume
         Element eltVol = new Element("volume", sNS);
         List<String> vols = getValues("volume", physical, logical, doiListPub);
@@ -827,8 +852,11 @@ public class DoiMetadataMapper {
     private String getPublicationType(DocStruct logical) {
         try {
             switch (logical.getType().toString()) {
-                case "MultiVolumeWork":
-                    return "Book";
+            case "MultiVolumeWork":
+                return "Book";
+            
+            case "Volume":
+                return "Book";
 
                 default:
                     return "Journal";
