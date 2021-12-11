@@ -421,7 +421,18 @@ public class DoiMetadataMapper {
                             eltNew.setAttribute(attribute.getName(), attribute.getValue());
                         }
 
-                        list.getEntries().add(eltNew);
+                        // first check for existing entries to avoid duplicates
+                        boolean existsInList = false;
+                        for (Element tempel : list.getEntries()) {
+                        	String tempelValue = tempel.getText();
+                        	if (tempelValue.equals(strValue)) {
+                        		existsInList = true;
+                        		break;
+                        	}
+						}
+                        if (!existsInList) {
+                        	list.getEntries().add(eltNew);
+                        }
                     }
                     lstContent.add(list);
                     //have gone through all children for this key here already, do not repeat!
