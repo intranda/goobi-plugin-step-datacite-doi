@@ -466,43 +466,45 @@ public class DoiMetadataMapper {
 
         ArrayList<Metadata> lstReturn = new ArrayList<Metadata>();
 
-        for (Element eltMap : mapping.get(field)) {
-
-            if (eltMap != null) {
-                String strDefault = getDefault(eltMap);
-                if (strDefault != null && !strDefault.isEmpty()) {
-                    MetadataType type = prefs.getMetadataTypeByName(eltMap.getChildText("metadata"));
-                    Metadata mdDefault = new Metadata(type);
-                    if (type.getIsPerson()) {
-                        mdDefault = new Person(type);
+        
+        if (mapping != null) {
+            for (Element eltMap : mapping.get(field)) {
+    
+                if (eltMap != null) {
+                    String strDefault = getDefault(eltMap);
+                    if (strDefault != null && !strDefault.isEmpty()) {
+                        MetadataType type = prefs.getMetadataTypeByName(eltMap.getChildText("metadata"));
+                        Metadata mdDefault = new Metadata(type);
+                        if (type.getIsPerson()) {
+                            mdDefault = new Person(type);
+                        }
+    
+                        mdDefault.setValue(strDefault);
+                        lstDefault.add(mdDefault);
                     }
-
-                    mdDefault.setValue(strDefault);
-                    lstDefault.add(mdDefault);
+                    //try to find the local value:
+                    metadata = eltMap.getChildText("metadata");
                 }
-                //try to find the local value:
-                metadata = eltMap.getChildText("metadata");
-            }
-
-            ArrayList<Metadata> lstLocalValues = getMetadataFromMets(struct, metadata);
-
-            if (!lstLocalValues.isEmpty()) {
-                lstReturn.addAll(lstLocalValues);
-                continue;
-            }
-
-            if (eltMap != null) {
-                //could not find first choice? then try alternatives
-                for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-                    lstLocalValues = getMetadataFromMets(struct, eltAlt.getText());
-                    if (!lstLocalValues.isEmpty()) {
-                        lstReturn.addAll(lstLocalValues);
-                        continue;
+    
+                ArrayList<Metadata> lstLocalValues = getMetadataFromMets(struct, metadata);
+    
+                if (!lstLocalValues.isEmpty()) {
+                    lstReturn.addAll(lstLocalValues);
+                    continue;
+                }
+    
+                if (eltMap != null) {
+                    //could not find first choice? then try alternatives
+                    for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                        lstLocalValues = getMetadataFromMets(struct, eltAlt.getText());
+                        if (!lstLocalValues.isEmpty()) {
+                            lstReturn.addAll(lstLocalValues);
+                            continue;
+                        }
                     }
                 }
             }
         }
-
         //otherwise just return default
         if (lstReturn.isEmpty())
             lstReturn = lstDefault;
