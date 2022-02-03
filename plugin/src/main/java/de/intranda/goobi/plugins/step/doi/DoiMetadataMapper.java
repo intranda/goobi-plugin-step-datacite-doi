@@ -467,7 +467,7 @@ public class DoiMetadataMapper {
         ArrayList<Metadata> lstReturn = new ArrayList<Metadata>();
 
         
-        if (mapping != null) {
+        if (mapping != null && field != null) {
             for (Element eltMap : mapping.get(field)) {
     
                 if (eltMap != null) {
