@@ -80,6 +80,9 @@
         <altMetadata>anchor_PublicationYear</altMetadata>
     </listMap>
 
+	<!-- create related item information just for the following publication types -->
+	<publicationTypeWithRelatedItem>Article</publicationTypeWithRelatedItem>
+
     <!-- Specific fields for publication info: -->
 
     <publicationData>
@@ -101,8 +104,5 @@
         <field>volume</field>
         <metadata>CurrentNo</metadata>
     </publicationData>
-
-	<!-- create related item informatin just for the following publication types -->
-	<publicationTypeWithRelatedItem>Article</publicationTypeWithRelatedItem>
 
 </Mapping>
