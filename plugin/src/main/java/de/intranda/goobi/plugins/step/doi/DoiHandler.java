@@ -161,7 +161,7 @@ public class DoiHandler {
             PostMetadata postData = new PostMetadata(ao);
             HTTPResponse response = postData.forUpdatingDoi(handle, metadataXml);
             if (response.getResponseCode() != HTTPResponse.CREATED) {
-                throw new DoiException("Tried to update DOI " + handle + " but failed. Response (" + response.getResponseCode() + "): " + response.getBodyAsString());
+                throw new DoiException("Tried to update DOI " + handle + " but failed. \n" + metadataXml + "\n Response (" + response.getResponseCode() + "): " + response.getBodyAsString());
             }
 
             //now update the url:

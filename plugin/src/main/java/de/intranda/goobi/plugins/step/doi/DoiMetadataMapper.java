@@ -540,9 +540,9 @@ public class DoiMetadataMapper {
             }
         }
         //otherwise just return default
-        if (lstReturn.isEmpty())
+        if (lstReturn.isEmpty()) {
             lstReturn = lstDefault;
-
+        }
         return lstReturn;
     }
 
