@@ -35,7 +35,7 @@
 
     <map>
         <field>hostingInstitution</field>
-        <metadata>OwningInstitution</metadata>
+        <metadata>_electronicPublisher</metadata>
         <default>intranda GmbH</default>
     </map>
 
@@ -46,10 +46,10 @@
 
     <!-- Optional fields: -->
 
-    <listMap>
-        <field>contributors</field>
-        <list>contributors</list>
-        <metadata>Editor</metadata>
+    <listMap alternateIdentifierType="Goobi identifier">
+        <field>alternateIdentifier</field>
+        <list>alternateIdentifiers</list>
+        <metadata>CatalogIDDigital</metadata>
     </listMap>
 
     <listMap>

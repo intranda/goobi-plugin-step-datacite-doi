@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.SubnodeConfiguration;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jdom2.Attribute;
@@ -280,15 +281,24 @@ public class DoiMetadataMapper {
      * Specific structure for an Editor
      */
     private Element makeEditor(Metadata mdPerson) {
-        Person editor = (Person) mdPerson;
+        Person person = (Person) mdPerson;
         Element eltEditor = new Element("contributor", sNS);
         eltEditor.setAttribute("contributorType", "Editor");
-
         Element eltName = new Element("contributorName", sNS);
-        eltName.addContent(editor.getDisplayname());
+        String strName = person.getDisplayname();
+        if (strName == null || strName.isEmpty() || strName.equals(",")) {
+            for (Element eltMap : doiListMappings.get("contributors")) {
+                if (eltMap != null) {
+                    strName = getDefault(eltMap);
+                    if (StringUtils.isBlank(strName)) {
+                        strName = "- unknown -";
+                    }
+                }   
+            }
+        }
+        eltName.addContent(strName);
         eltEditor.addContent(eltName);
-
-        addName(editor, eltEditor);
+        addName(person, eltEditor);
         return eltEditor;
     }
 
@@ -296,18 +306,24 @@ public class DoiMetadataMapper {
      * Specific structure for an Author
      */
     private Element makeAuthor(Metadata mdPerson) {
-        Person author = (Person) mdPerson;
+        Person person = (Person) mdPerson;
         Element eltAuthor = new Element("creator", sNS);
+        
         Element eltName = new Element("creatorName", sNS);
-        String strName = author.getDisplayname();
-        if (strName == null || strName.isEmpty()) {
-            strName = mdPerson.getValue();
+        String strName = person.getDisplayname();
+        if (strName == null || strName.isEmpty() || strName.equals(",")) {
+            for (Element eltMap : doiMappings.get("creators")) {
+                if (eltMap != null) {
+                    strName = getDefault(eltMap);
+                    if (StringUtils.isBlank(strName)) {
+                        strName = "- unknown -";
+                    }
+                }   
+            }
         }
-
         eltName.addContent(strName);
         eltAuthor.addContent(eltName);
-
-        addName(author, eltAuthor);
+        addName(person, eltAuthor);
         return eltAuthor;
     }
 
@@ -347,17 +363,18 @@ public class DoiMetadataMapper {
         BasicDoi doi = new BasicDoi();
         doi.setTitles(getValues("title", physical, logical));
         
-        //add publisher, which is just allowed once
-        List<String> publishers = getValues("publisher", physical, logical);
+        
+        
+//        //add publisher, which is just allowed once
+          List<String> publishers = getValues("publisher", physical, logical);
         if (publishers.size()>1) {
             String singlePublisher = "";
             for (String pub : publishers) {
                 singlePublisher += pub + "; ";
             }
             publishers = new ArrayList<String>();
-            publishers.add(singlePublisher.substring(0, singlePublisher.length()-3));
+            publishers.add(singlePublisher.substring(0, singlePublisher.length()-2));
         }
-        
         doi.setPublishers(publishers);
         doi.setPublicationYears(getValues("publicationYear", physical, logical));
         doi.setResourceTypes(getValues("resourceType", physical, logical));
@@ -605,23 +622,26 @@ public class DoiMetadataMapper {
                 }
             }
 
-            //empty? then look in logical parent:
-            lstLocalValues = getStringMetadataFromMets(logical, metadata);
-            if (!lstLocalValues.isEmpty()) {
-                lstReturn.addAll(lstLocalValues);
-                continue;
-            }
-
-            if (eltMap != null) {
-                //could not find first choice? then try alternatives
-                for (Element eltAlt : eltMap.getChildren("altMetadata")) {
-                    lstLocalValues = getStringMetadataFromMets(logical, eltAlt.getText());
-                    if (!lstLocalValues.isEmpty()) {
-                        lstReturn.addAll(lstLocalValues);
-                        continue;
+            //empty? then look in logical parent - if that is not the same object
+            if (struct!=logical) {
+                lstLocalValues = getStringMetadataFromMets(logical, metadata);
+                if (!lstLocalValues.isEmpty()) {
+                    lstReturn.addAll(lstLocalValues);
+                    continue;
+                }
+                
+                if (eltMap != null) {
+                    //could not find first choice? then try alternatives
+                    for (Element eltAlt : eltMap.getChildren("altMetadata")) {
+                        lstLocalValues = getStringMetadataFromMets(logical, eltAlt.getText());
+                        if (!lstLocalValues.isEmpty()) {
+                            lstReturn.addAll(lstLocalValues);
+                            continue;
+                        }
                     }
                 }
             }
+            
         }
 
         //otherwise just return default
