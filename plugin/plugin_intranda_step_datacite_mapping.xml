@@ -11,7 +11,7 @@
     </map>
 
     <map>
-        <field>author</field>
+        <field>creators</field>
         <metadata>Author</metadata>
         <altMetadata>Composer</altMetadata>
         <altMetadata>IllustratorArtist</altMetadata>
@@ -33,12 +33,13 @@
         <default>#CurrentYear</default>
     </map>
 
+	<!-- still unused
     <map>
-        <field>inst</field>
+        <field>hostingInstitution</field>
         <metadata>OwningInstitution</metadata>
         <default>intranda GmbH</default>
     </map>
-
+	-->
 
     <map>
         <field>resourceType</field>
@@ -48,7 +49,7 @@
     <!-- Optional fields: -->
 
     <listMap>
-        <field>editor</field>
+        <field>contributors</field>
         <list>contributors</list>
         <metadata>Editor</metadata>
     </listMap>

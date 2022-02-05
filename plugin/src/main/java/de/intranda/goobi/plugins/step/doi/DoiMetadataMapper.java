@@ -101,10 +101,10 @@ public class DoiMetadataMapper {
         // create a list of mandatory fields for DOI
         lstMandatory = new ArrayList<String>();
         lstMandatory.add("title");
-        lstMandatory.add("author");
+        lstMandatory.add("creators");
         lstMandatory.add("publisher");
         lstMandatory.add("publicationYear");
-        lstMandatory.add("inst");
+        //lstMandatory.add("hostingInstitution");
         lstMandatory.add("resourceType");
     }
 
@@ -362,6 +362,8 @@ public class DoiMetadataMapper {
         doi.setPublicationYears(getValues("publicationYear", physical, logical));
         doi.setResourceTypes(getValues("resourceType", physical, logical));
 
+        //doi.setHostingInstitution(getValues("hostingInstitution", physical, logical).get(0));
+        
         // set content
         doi.setContentList(getContentLists(physical, logical));
         
@@ -405,7 +407,7 @@ public class DoiMetadataMapper {
         
     	//first (compulsory) authors:
         DoiListContent authors = new DoiListContent("creators");
-        for (Metadata mdAuthot : getMetadataValues("author", doc)) {
+        for (Metadata mdAuthot : getMetadataValues("creators", doc)) {
             Element eltAuthor = makeAuthor(mdAuthot);
             authors.getEntries().add(eltAuthor);
         }
@@ -419,9 +421,9 @@ public class DoiMetadataMapper {
             }
 
             for (Element elt : doiListMappings.get(key)) {
-                if (key.contentEquals("editor")) {
+                if (key.contentEquals("contributors")) {
                     DoiListContent editors = new DoiListContent("contributors");
-                    for (Metadata mdEditor : getMetadataValues("editor", doc)) {
+                    for (Metadata mdEditor : getMetadataValues("contributors", doc)) {
                         Element eltEditor = makeEditor(mdEditor);
                         editors.getEntries().add(eltEditor);
                     }
@@ -871,14 +873,14 @@ public class DoiMetadataMapper {
     private String getPublicationType(DocStruct logical) {
         try {
             switch (logical.getType().toString()) {
-            case "MultiVolumeWork":
-                return "Book";
-            
-            case "Volume":
-                return "Book";
-
-            default:
-                return "Journal";
+                case "MultiVolumeWork":
+                    return "Book";
+                
+                case "Volume":
+                    return "Book";
+    
+                default:
+                    return "Journal";
             }
         } catch (Exception e) {
             return "Journal";

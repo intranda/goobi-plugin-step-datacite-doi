@@ -34,6 +34,9 @@ public class BasicDoi {
     private List<String> resourceTypes;
 
     @Getter @Setter
+    private String hostingInstitution;
+    
+    @Getter @Setter
     private List<DoiListContent> contentList;
 
     private List<Pair<String, List<String>>> valueList;
