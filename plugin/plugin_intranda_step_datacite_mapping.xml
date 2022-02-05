@@ -33,13 +33,11 @@
         <default>#CurrentYear</default>
     </map>
 
-	<!-- still unused
     <map>
         <field>hostingInstitution</field>
         <metadata>OwningInstitution</metadata>
         <default>intranda GmbH</default>
     </map>
-	-->
 
     <map>
         <field>resourceType</field>
@@ -54,6 +52,12 @@
         <metadata>Editor</metadata>
     </listMap>
 
+    <listMap>
+        <field>contributors</field>
+        <list>contributors</list>
+        <metadata>Editor</metadata>
+    </listMap>
+    
     <listMap relatedIdentifierType="ISSN" relationType="IsPublishedIn">
         <field>relatedIdentifier</field>
         <list>relatedIdentifiers</list>

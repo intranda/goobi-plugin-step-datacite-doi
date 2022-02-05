@@ -412,6 +412,19 @@ public class DoiMetadataMapper {
         }
         lstContent.add(authors);
 
+        // add hosting Institution
+        DoiListContent contributors = new DoiListContent("contributors");
+        for (Metadata md : getMetadataValues("hostingInstitution", doc)) {
+            // create main element
+            Element el = new Element("contributor", sNS);
+            el.setAttribute("contributorType", "HostingInstitution");
+            // create subelement
+            Element host = new Element("contributorName", sNS);
+            host.addContent(md.getValue());
+            el.addContent(host);
+            contributors.getEntries().add(el);
+        }
+        
         //then others:
         for (String key : doiListMappings.keySet()) {
 
@@ -420,18 +433,12 @@ public class DoiMetadataMapper {
             }
 
             for (Element elt : doiListMappings.get(key)) {
-
                 
                 // handle the contributors different ?
                 if (key.contentEquals("contributors")) {
-                    DoiListContent editors = new DoiListContent("contributors");
                     for (Metadata mdEditor : getMetadataValues("contributors", doc)) {
                         Element eltEditor = makeEditor(mdEditor);
-                        editors.getEntries().add(eltEditor);
-                    }
-                    // just add it if it is not empty
-                    if (editors.getEntries().size()>0) {
-                        lstContent.add(editors);
+                        contributors.getEntries().add(eltEditor);
                     }
                     
                 } else {
@@ -467,6 +474,9 @@ public class DoiMetadataMapper {
             }
         }
 
+        // add the contributors finally
+        lstContent.add(contributors);
+        
         if (lstContent.isEmpty()) {
             return null;
         }
