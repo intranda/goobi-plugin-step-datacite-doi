@@ -364,8 +364,8 @@ public class DoiMetadataMapper {
 
         //doi.setHostingInstitution(getValues("hostingInstitution", physical, logical).get(0));
         
-        // set content
-        doi.setContentList(getContentLists(physical, logical));
+        // now add all creators and the other content
+        doi.setContentList(getRestOfContentLists(physical, logical));
         
         // add values as Pairs
         for (String key : doiMappings.keySet()) {
@@ -392,21 +392,20 @@ public class DoiMetadataMapper {
     }
 
     /**
-     * get a list of all needed content information
+     * get the list of all additional needed content if it is there beside the creators
      * 
      * @param doc
      * @param logical
      * @return
      * @throws MetadataTypeNotAllowedException
      */
-    private List<DoiListContent> getContentLists(DocStruct doc, DocStruct logical) throws MetadataTypeNotAllowedException {
+    private List<DoiListContent> getRestOfContentLists(DocStruct doc, DocStruct logical) throws MetadataTypeNotAllowedException {
     	// collect a list of content information
     	List<DoiListContent> lstContent = new ArrayList<DoiListContent>();
         
-    	//go through the metadata map
-        
-    	//first (compulsory) authors:
-        DoiListContent authors = new DoiListContent("creators");
+    	//first the mandatory authors:
+
+    	DoiListContent authors = new DoiListContent("creators");
         for (Metadata mdAuthot : getMetadataValues("creators", doc)) {
             Element eltAuthor = makeAuthor(mdAuthot);
             authors.getEntries().add(eltAuthor);
@@ -421,13 +420,20 @@ public class DoiMetadataMapper {
             }
 
             for (Element elt : doiListMappings.get(key)) {
+
+                
+                // handle the contributors different ?
                 if (key.contentEquals("contributors")) {
                     DoiListContent editors = new DoiListContent("contributors");
                     for (Metadata mdEditor : getMetadataValues("contributors", doc)) {
                         Element eltEditor = makeEditor(mdEditor);
                         editors.getEntries().add(eltEditor);
                     }
-                    lstContent.add(editors);
+                    // just add it if it is not empty
+                    if (editors.getEntries().size()>0) {
+                        lstContent.add(editors);
+                    }
+                    
                 } else {
                     DoiListContent list = new DoiListContent(elt.getChildText("list"));
                     for (String strValue : getValues(key, doc, logical)) {
@@ -450,7 +456,11 @@ public class DoiMetadataMapper {
                         	list.getEntries().add(eltNew);
                         }
                     }
-                    lstContent.add(list);
+                    
+                    // just add it if it is not empty
+                    if (list.getEntries().size()>0) {
+                        lstContent.add(list);
+                    }
                     //have gone through all children for this key here already, do not repeat!
                     break;
                 }
