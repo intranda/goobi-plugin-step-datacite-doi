@@ -32,9 +32,6 @@ public class BasicDoi {
     private List<String> publicationYears;
     @Getter @Setter
     private List<String> resourceTypes;
-
-    @Getter @Setter
-    private String hostingInstitution;
     
     @Getter @Setter
     private List<DoiListContent> contentList;
