@@ -362,7 +362,7 @@ public class DoiMetadataMapper {
         doi.setPublicationYears(getValues("publicationYear", physical, logical));
         doi.setResourceTypes(getValues("resourceType", physical, logical));
 
-        //doi.setHostingInstitution(getValues("hostingInstitution", physical, logical).get(0));
+        doi.setHostingInstitution(getValues("hostingInstitution", physical, logical).get(0));
         
         // now add all creators and the other content
         doi.setContentList(getRestOfContentLists(physical, logical));
