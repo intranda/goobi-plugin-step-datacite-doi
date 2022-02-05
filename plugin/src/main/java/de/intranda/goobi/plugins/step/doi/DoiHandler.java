@@ -131,7 +131,7 @@ public class DoiHandler {
             HTTPResponse response = postData.forDoi(doi, metadata);
 
             if (response.getResponseCode() != HTTPResponse.CREATED) {
-                throw new DoiException("Error while registring metadata for doi " + doi + ". Response (" + response.getResponseCode() + "): " + response.getBodyAsString());
+                throw new DoiException("Error while registring metadata \n" + metadata + "\n for doi " + doi + ". Response (" + response.getResponseCode() + "): " + response.getBodyAsString());
             }
         } catch (DoiException e) {
             log.error("Tried to register DOI " + doi + " but failed", e);

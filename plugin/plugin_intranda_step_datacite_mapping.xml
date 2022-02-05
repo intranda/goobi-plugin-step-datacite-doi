@@ -36,7 +36,7 @@
     <map>
         <field>inst</field>
         <metadata>OwningInstitution</metadata>
-        <default>Universitätsbibliothek Stuttgart</default>
+        <default>intranda GmbH</default>
     </map>
 
 
@@ -101,5 +101,7 @@
         <metadata>CurrentNo</metadata>
     </publicationData>
 
+	<!-- create related item informatin just for the following publication types -->
+	<publicationTypeWithRelatedItem>Article</publicationTypeWithRelatedItem>
 
 </Mapping>

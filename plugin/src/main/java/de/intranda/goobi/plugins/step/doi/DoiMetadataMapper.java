@@ -346,7 +346,19 @@ public class DoiMetadataMapper {
 
         BasicDoi doi = new BasicDoi();
         doi.setTitles(getValues("title", physical, logical));
-        doi.setPublishers(getValues("publisher", physical, logical));
+        
+        //add publisher, which is just allowed once
+        List<String> publishers = getValues("publisher", physical, logical);
+        if (publishers.size()>1) {
+            String singlePublisher = "";
+            for (String pub : publishers) {
+                singlePublisher += pub + "; ";
+            }
+            publishers = new ArrayList<String>();
+            publishers.add(singlePublisher.substring(0, singlePublisher.length()-3));
+        }
+        
+        doi.setPublishers(publishers);
         doi.setPublicationYears(getValues("publicationYear", physical, logical));
         doi.setResourceTypes(getValues("resourceType", physical, logical));
 
@@ -750,99 +762,104 @@ public class DoiMetadataMapper {
                 lstElts = doiListPub.get(key);
             }
             lstElts.add(elt);
-
             doiListPub.put(key, lstElts);
         }
-
-        String relatedItemType = getPublicationType(logical);
-
-        Element pubData = new Element("relatedItems", sNS);
-        Element item = new Element("relatedItem", sNS);
-        item.setAttribute("relationType", "IsPublishedIn");
-        item.setAttribute("relatedItemType", relatedItemType);
-
-        //ISSN
-        Element eltId = new Element("relatedItemIdentifier", sNS);
-        eltId.setAttribute("relatedItemIdentifierType", "ISSN");
-        List<String> issn = getValues("ISSN", physical, logical, doiListPub);
-        if (issn != null && !issn.isEmpty()) {
-            eltId.setText(issn.get(0));
-            item.addContent(eltId);
+        
+        // create a related item only for specific publication types
+        List<String> configDocTypes = new ArrayList<String>();
+        for (Element elt : rootNode.getChildren("publicationTypeWithRelatedItem")) {
+            configDocTypes.add(elt.getValue());
         }
+        if (configDocTypes.contains(logical.getType().getName())){
+            String relatedItemType = getPublicationType(logical);
+            Element pubData = new Element("relatedItems", sNS);
+            Element item = new Element("relatedItem", sNS);
+            item.setAttribute("relationType", "IsPublishedIn");
+            item.setAttribute("relatedItemType", relatedItemType);
 
-        //Title
-        Element eltTitles = new Element("titles", sNS);
-        List<String> titles = getValues("title", physical, logical, doiListPub);
-        Element eltTitle = null;
-        if (titles != null && !titles.isEmpty()) {
-            for (String title : titles) {
-
-                eltTitle = new Element("title", sNS);
-                eltTitle.setText(title);
-                eltTitles.addContent(eltTitle);
+            //ISSN
+            Element eltId = new Element("relatedItemIdentifier", sNS);
+            eltId.setAttribute("relatedItemIdentifierType", "ISSN");
+            List<String> issn = getValues("ISSN", physical, logical, doiListPub);
+            if (issn != null && !issn.isEmpty()) {
+                eltId.setText(issn.get(0));
+                item.addContent(eltId);
             }
-        }
-        item.addContent(eltTitles);
 
-        //publicationYear, but make sure it works
-        String yearToUse = null;
-        Pattern pattern = Pattern.compile("[\\d]{4}");
-	    List<String> years = getValues("publicationYear", physical, logical, doiListPub);
-	    for (String y : years) {
-	    	Matcher matcher = pattern.matcher(y);
-	        if(matcher.matches()) {
-	        	yearToUse = y;
-	        	break;
-	        } 
-	    }
-	    // if it does not work try to cut it to 4 characters
-	    if (yearToUse == null) {
-	    	for (String y : years) {
-	    		if (y.length()>4) {
-	        		String tempText = y.substring(0,4);
-	        		Matcher matcher = pattern.matcher(tempText);
-	                if (matcher.matches()) {
-	                	yearToUse = tempText;
-	                	break;
-	                };
-	        	}	    		
-		    }
-        }
-	    // now use the year only if it is not null
-	    if (yearToUse != null) {
-	        Element eltYear = new Element("publicationYear", sNS);
-            eltYear.setText(yearToUse);
-            item.addContent(eltYear);
-	    }
-	        
-        //volume
-        Element eltVol = new Element("volume", sNS);
-        List<String> vols = getValues("volume", physical, logical, doiListPub);
-        if (vols != null && !vols.isEmpty()) {
-            eltVol.setText(vols.get(0));
-            item.addContent(eltVol);
-        }
+            //Title
+            Element eltTitles = new Element("titles", sNS);
+            List<String> titles = getValues("title", physical, logical, doiListPub);
+            Element eltTitle = null;
+            if (titles != null && !titles.isEmpty()) {
+                for (String title : titles) {
+                    
+                    eltTitle = new Element("title", sNS);
+                    eltTitle.setText(title);
+                    eltTitles.addContent(eltTitle);
+                }
+            }
+            item.addContent(eltTitles);
 
-        //pages
-        MetadatenHelper metahelper = new MetadatenHelper(prefs, document);
-        MutablePair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
-        if (first != null) {
-            String firstPage = first.getRight();
-            Element eltFirstPage = new Element("firstPage", sNS);
-            eltFirstPage.setText(firstPage);
-            item.addContent(eltFirstPage);
-        }
+            //publicationYear, but make sure it works
+            String yearToUse = null;
+            Pattern pattern = Pattern.compile("[\\d]{4}");
+            List<String> years = getValues("publicationYear", physical, logical, doiListPub);
+            for (String y : years) {
+                Matcher matcher = pattern.matcher(y);
+                if(matcher.matches()) {
+                    yearToUse = y;
+                    break;
+                } 
+            }
+            // if it does not work try to cut it to 4 characters
+            if (yearToUse == null) {
+                for (String y : years) {
+                    if (y.length()>4) {
+                        String tempText = y.substring(0,4);
+                        Matcher matcher = pattern.matcher(tempText);
+                        if (matcher.matches()) {
+                            yearToUse = tempText;
+                            break;
+                        };
+                    }	    		
+                }
+            }
+            // now use the year only if it is not null
+            if (yearToUse != null) {
+                Element eltYear = new Element("publicationYear", sNS);
+                eltYear.setText(yearToUse);
+                item.addContent(eltYear);
+            }
+            
+            //volume
+            Element eltVol = new Element("volume", sNS);
+            List<String> vols = getValues("volume", physical, logical, doiListPub);
+            if (vols != null && !vols.isEmpty()) {
+                eltVol.setText(vols.get(0));
+                item.addContent(eltVol);
+            }
+            
+            //pages
+            MetadatenHelper metahelper = new MetadatenHelper(prefs, document);
+            MutablePair<String, String> first = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_FIRST);
+            if (first != null) {
+                String firstPage = first.getRight();
+                Element eltFirstPage = new Element("firstPage", sNS);
+                eltFirstPage.setText(firstPage);
+                item.addContent(eltFirstPage);
+            }
+            
+            MutablePair<String, String> last = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_LAST);
+            if (first != null) {
+                String lastPage = last.getRight();
+                Element eltLastPage = new Element("lastPage", sNS);
+                eltLastPage.setText(lastPage);
+                item.addContent(eltLastPage);
+            }
 
-        MutablePair<String, String> last = metahelper.getImageNumber(physical, MetadatenHelper.PAGENUMBER_LAST);
-        if (first != null) {
-            String lastPage = last.getRight();
-            Element eltLastPage = new Element("lastPage", sNS);
-            eltLastPage.setText(lastPage);
-            item.addContent(eltLastPage);
+            pubData.addContent(item);
+            doi.setPubData(pubData);
         }
-
-        pubData.addContent(item);
-        doi.setPubData(pubData);
     }
 
     /**
@@ -860,8 +877,8 @@ public class DoiMetadataMapper {
             case "Volume":
                 return "Book";
 
-                default:
-                    return "Journal";
+            default:
+                return "Journal";
             }
         } catch (Exception e) {
             return "Journal";
