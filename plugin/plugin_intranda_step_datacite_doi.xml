@@ -1,6 +1,10 @@
 <config_plugin>
-	<!-- order of configuration is: 1.) project name and step name matches 2.) step name matches and project is * 3.) project name matches and step name is 
-		* 4.) project name and step name are * -->
+	<!-- order of configuration is: 
+		1.) project name and step name matches 
+		2.) step name matches and project is * 
+		3.) project name matches and step name is * 
+		4.) project name and step name are * 
+	-->
 
 	<config>
 		<!-- which projects to use for (can be more then one, otherwise use *) -->
@@ -9,13 +13,13 @@
 
         <!-- authentication and main information -->
         <!-- For testing: for deployment, remove "test" -->
-        <serviceAddress>https://mds.test.datacite.org/</serviceAddress>
+		<serviceAddress>https://mds.test.datacite.org/</serviceAddress>
         
 		<!-- authentication and main information -->
 		<base>10.80831</base>
 		<url>https://viewer.goobi.io/idresolver?handle=</url>
-		<password></password>
 		<username></username>
+		<password></password>
 
 		<!-- configuration for Handles -->
 		<prefix>go</prefix>
@@ -27,7 +31,7 @@
 		<doiMapping>/opt/digiverso/goobi/config/plugin_intranda_step_datacite_mapping.xml</doiMapping>
 
         <!-- Type of DocStruct which should be given DOIs -->
-        <typeForDOI>Article</typeForDOI>
+		<typeForDOI>Article</typeForDOI>
 
 	</config>
 
