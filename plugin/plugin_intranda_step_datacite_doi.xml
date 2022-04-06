@@ -17,7 +17,7 @@
         
 		<!-- authentication and main information -->
 		<base>10.80831</base>
-		<url>https://viewer.goobi.io/idresolver?handle=</url>
+		<url>https://viewer.example.org/resolver?field=MD_PI_DOI&identifier=</url>
 		<username></username>
 		<password></password>
 
