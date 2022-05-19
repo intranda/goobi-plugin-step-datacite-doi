@@ -307,6 +307,7 @@ public class DoiMetadataMapper {
      */
     private Element makeAuthor(Metadata mdPerson) {
         Person person = (Person) mdPerson;
+        checkPersonsDisplayName(person);
         Element eltAuthor = new Element("creator", sNS);
         
         Element eltName = new Element("creatorName", sNS);
@@ -351,22 +352,21 @@ public class DoiMetadataMapper {
      * 
      * @param physical
      * @param anchor
-     * @param anchor
      * @return
      * @throws MetadataTypeNotAllowedException
      */
-    public BasicDoi getBasicDoi(DocStruct physical, DocStruct logical, DocStruct anchor, DigitalDocument document)
+    public BasicDoi getBasicDoi(DocStruct docstruct, DocStruct logical, DocStruct anchor, DigitalDocument document)
             throws MetadataTypeNotAllowedException {
 
         this.anchor = anchor;
 
         BasicDoi doi = new BasicDoi();
-        doi.setTitles(getValues("title", physical, logical));
+        doi.setTitles(getValues("title", docstruct, logical));
         
         
         
 //        //add publisher, which is just allowed once
-          List<String> publishers = getValues("publisher", physical, logical);
+          List<String> publishers = getValues("publisher", docstruct, logical);
         if (publishers.size()>1) {
             String singlePublisher = "";
             for (String pub : publishers) {
@@ -376,18 +376,18 @@ public class DoiMetadataMapper {
             publishers.add(singlePublisher.substring(0, singlePublisher.length()-2));
         }
         doi.setPublishers(publishers);
-        doi.setPublicationYears(getValues("publicationYear", physical, logical));
-        doi.setResourceTypes(getValues("resourceType", physical, logical));
+        doi.setPublicationYears(getValues("publicationYear", docstruct, logical));
+        doi.setResourceTypes(getValues("resourceType", docstruct, logical));
         
         // now add all creators and the other content
-        doi.setContentList(getRestOfContentLists(physical, logical));
+        doi.setContentList(getRestOfContentLists(docstruct, logical));
         
         // add values as Pairs
         for (String key : doiMappings.keySet()) {
             if (lstMandatory.contains(key)) {
                 continue;
             }
-            List<String> values = getValues(key, physical, logical);
+            List<String> values = getValues(key, docstruct, logical);
             if (values == null || values.isEmpty()) {
                 continue;
             }
@@ -398,7 +398,7 @@ public class DoiMetadataMapper {
         }
         
         try {
-            addPublicationInfo(doi, physical, logical, document);
+            addPublicationInfo(doi, docstruct, logical, document);
         } catch (NullValueException e) {
             //no publication info
         }
@@ -568,7 +568,7 @@ public class DoiMetadataMapper {
      * @param logical
      */
     private List<String> getValues(String field, DocStruct struct, DocStruct logical) {
-        //use the vlaue or value list mapping
+        //use the value or value list mapping
         return getValues(field, struct, logical, null);
     }
 
@@ -665,7 +665,13 @@ public class DoiMetadataMapper {
      * Get all metadata of type "name" in the specified struct.
      */
     private ArrayList<Metadata> getMetadataFromMets(DocStruct struct, String name) {
-        if (fieldIsPerson(name)) {
+    	//if the metadata is for the anchor, then chekc anchor first:
+        if (this.anchor != null && name.startsWith("anchor_")) {
+            struct = anchor;
+            name = name.replace("anchor_", "");
+        }
+        
+    	if (fieldIsPerson(name)) {
             return getMetadataPersonFromMets(struct, name);
         }
 
@@ -744,6 +750,8 @@ public class DoiMetadataMapper {
 
         for (Person mdata : struct.getAllPersons()) {
             if (mdata.getRole().equalsIgnoreCase(name)) {
+            	checkPersonsDisplayName(mdata);
+            	
                 String strName = mdata.getDisplayname();
                 if (strName == null || strName.isEmpty()) {
                     strName = mdata.getLastname();
@@ -757,7 +765,13 @@ public class DoiMetadataMapper {
         return lstValues;
     }
 
-    /**
+    private void checkPersonsDisplayName(Person p) {
+		if (StringUtils.isBlank(p.getDisplayname())) {
+			p.setDisplayname(p.getLastname() + ", " + p.getFirstname());
+		}
+	}
+
+	/**
      * Get all persons of type "name" in the specified struct.
      */
     private ArrayList<Metadata> getMetadataPersonFromMets(DocStruct struct, String name) {
