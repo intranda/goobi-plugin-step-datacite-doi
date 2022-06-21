@@ -18,8 +18,8 @@ Detail                      | Description
 **Plugin identifier**       | intranda_step_datacite_doi
 **Plugin type**             | Step Plugin
 **Licence**                 | GPL 2.0 or newer
-**Documentation (German)**  | https://docs.goobi.io/goobi-workflow-plugins-de/step/intranda_step_doi 
-**Documentation (English)** | https://docs.goobi.io/goobi-workflow-plugins-en/step/intranda_step_doi
+**Documentation (German)**  | https://docs.goobi.io/goobi-workflow-plugins-de/step/intranda_step_datacite_doi
+**Documentation (English)** | https://docs.goobi.io/goobi-workflow-plugins-en/step/intranda_step_datacite_doi
 
 
 Goobi details
