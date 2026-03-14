@@ -1,7 +1,7 @@
 ---
 title: Plugin for registering DOI via the DataCite API
 identifier: intranda_step_datacite_doi
-published: true
+published: false
 description: This is a Goobi step plugin to allow the registration of digital objects at the DataCite DOI service.
 ---
 ## Introduction
