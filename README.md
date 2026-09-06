@@ -1,6 +1,9 @@
 # Goobi workflow Plugin: goobi-plugin-step-datacite-doi
 
-<img src="https://goobi.io/wp-content/uploads/logo_goobi_plugin.png" align="right" style="margin:0 0 20px 20px;" alt="Plugin for Goobi workflow" width="175" height="109">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://goobi.io/logo_goobi_workflow_dark.png">
+  <img src="https://goobi.io/logo_goobi_workflow.png" align="right" alt="Plugin for Goobi workflow" width="240" height="132" hspace="20" vspace="10">
+</picture>
 
 This Step plugin for Goobi workflow allows the registration of digital objects at the DataCite DOI service. There is another newer implementation using XSLT that allows more flexibility. See here: goobi-plugin-step-doi
 
@@ -15,6 +18,8 @@ Detail                      | Description
 **Plugin identifier**       | intranda_step_datacite_doi
 **Plugin type**             | step
 **Licence**                 | GPL 2.0 or newer
+**Documentation (German)**  | https://docs.goobi.io/workflow-plugins/v/ger/step/goobi-plugin-step-datacite-doi
+**Documentation (English)** | https://docs.goobi.io/workflow-plugins/v/eng/step/goobi-plugin-step-datacite-doi
 
 ## Goobi details
 
